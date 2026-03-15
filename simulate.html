@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simuler mon logo — Landesert 4L Trophy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-cream: #FDF6E3;
+      --color-sand: #E8C96D;
+      --color-blue: #5BAFD6;
+      --color-green: #3A7D44;
+      --color-coral: #E85D3A;
+      --color-brown: #6B4226;
+      --color-bg: #FEFCF6;
+      --color-text: #2D2A24;
+      --color-subtle: #8A8070;
+      --color-card: #FFFFFF;
+      --color-border: rgba(107, 66, 38, 0.12);
+      --font-heading: 'Quicksand', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 2rem;
+      background: white;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .header a { text-decoration: none; color: var(--color-brown); }
+    .header .logo { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; }
+    .header .back { font-size: 0.9rem; opacity: 0.7; }
+    .header .back:hover { opacity: 1; }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    .viewer-panel { flex: 1; position: relative; background: #f0ebe0; overflow: hidden; }
+    .viewer-panel canvas { width: 100%; height: 100%; display: block; }
+
+    .viewer-hint {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(45, 42, 36, 0.75);
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+
+    .side-panel {
+      width: 360px;
+      background: white;
+      border-left: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .side-panel h2 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-cream);
+    }
+
+    .zone-info {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .zone-info-name {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--color-brown);
+      margin-bottom: 0.3rem;
+    }
+    .zone-info-tag {
+      display: inline-block;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      color: white;
+    }
+    .zone-info-hint {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--color-subtle);
+      line-height: 1.5;
+    }
+
+    .upload-section {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .upload-section label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--color-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: var(--color-cream);
+    }
+    .upload-area:hover {
+      border-color: var(--color-sand);
+    }
+    .upload-area.has-logo {
+      border-style: solid;
+      border-color: var(--color-green);
+    }
+    .upload-area p {
+      font-size: 0.85rem;
+      color: var(--color-subtle);
+    }
+    .upload-area img {
+      max-width: 100%;
+      max-height: 80px;
+      margin-bottom: 0.5rem;
+    }
+
+    .controls-section {
+      padding: 1rem 1.2rem;
+      flex: 1;
+      display: none;
+    }
+    .controls-section.active { display: block; }
+
+    .controls-section label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .controls-section .hint {
+      font-size: 0.75rem;
+      color: var(--color-subtle);
+      margin-bottom: 0.8rem;
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .slider-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--color-brown);
+    }
+    .slider-row .slider-val {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.85rem;
+      min-width: 3rem;
+      text-align: right;
+    }
+
+    .btn-remove {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      background: none;
+      border: 1px solid var(--color-coral);
+      color: var(--color-coral);
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-remove:hover {
+      background: #fde8e2;
+    }
+
+    .contact-bar {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+      margin-top: auto;
+    }
+    .contact-bar p {
+      font-size: 0.8rem;
+      color: var(--color-subtle);
+      margin-bottom: 0.6rem;
+    }
+    .btn-contact {
+      display: inline-block;
+      padding: 0.6rem 1.5rem;
+      background: var(--color-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-contact:hover { background: #2e6335; }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-brown);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: var(--font-heading);
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .viewer-panel { min-height: 50vh; }
+      .side-panel { width: 100%; max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="sponsor.html" class="back">&larr; Retour aux emplacements</a>
+    <a href="index.html" class="logo">LANDESERT</a>
+  </div>
+
+  <div class="main">
+    <div class="viewer-panel">
+      <canvas id="car-viewer"></canvas>
+      <div class="viewer-hint" id="viewer-hint">Cliquez sur la voiture pour placer votre logo</div>
+    </div>
+    <div class="side-panel">
+      <h2>Simuler mon logo</h2>
+
+      <div class="zone-info" id="zone-info">
+        <div class="zone-info-name" id="zone-name">—</div>
+        <span class="zone-info-tag" id="zone-tag">—</span>
+        <p class="zone-info-hint">Zone indicative. Vous pouvez placer votre logo librement sur la voiture.</p>
+      </div>
+
+      <div class="upload-section">
+        <label>Votre logo</label>
+        <div class="upload-area" id="upload-area">
+          <p>Cliquez ou glissez une image ici</p>
+        </div>
+        <input type="file" id="logo-input" accept="image/*" style="display:none">
+      </div>
+
+      <div class="controls-section" id="controls-section">
+        <label>Taille du logo</label>
+        <div class="slider-row">
+          <input type="range" id="size-slider" min="5" max="200" value="50">
+          <span class="slider-val" id="size-val">50%</span>
+        </div>
+
+        <label>Rotation</label>
+        <div class="slider-row">
+          <input type="range" id="rotation-slider" min="-180" max="180" value="0">
+          <span class="slider-val" id="rotation-val">0°</span>
+        </div>
+
+        <p class="hint">Cliquez sur la voiture pour repositionner le logo.</p>
+
+        <button class="btn-remove" id="btn-remove">Retirer le logo</button>
+      </div>
+
+      <div class="contact-bar">
+        <p>Cet emplacement vous plaît ?</p>
+        <a id="btn-contact" href="mailto:landesert.4ltrophy@gmail.com?subject=Sponsoring%204L%20Trophy" class="btn-contact">Nous contacter</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import {
+      createScene, loadCarModel, showToast, zoneHash
+    } from "./assets/js/common.js";
+
+    // ---- Parse zone param ----
+    const params = new URLSearchParams(location.search);
+    const zoneIndex = parseInt(params.get("zone")) || 0;
+
+    const categories = {
+      "50":   { label: "50 €",   color: 0x9b5999 },
+      "100":  { label: "100 €",  color: 0x1a3a6b },
+      "150":  { label: "150 €",  color: 0x2980b9 },
+      "200":  { label: "200 €",  color: 0x1b5e20 },
+      "300":  { label: "300 €",  color: 0xb8860b },
+      "400":  { label: "400 €",  color: 0xc05000 },
+      "600":  { label: "600 €",  color: 0xe85d3a },
+      "1000": { label: "1000 €", color: 0xcc0000 },
+    };
+
+    // ---- Scene setup ----
+    const { scene, camera, renderer, controls } = createScene("car-viewer");
+
+    // ---- State ----
+    const carMeshes = [];
+    let zonesData = [];
+    let logoTexture = null;
+    let logoAspect = 1;
+    let decalMesh = null;
+    let lastHitPoint = null;
+    let lastHitNormal = null;
+
+    // ---- Load model + zones ----
+    const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); });
+    const loadZones = fetch("assets/zones.json").then(r => r.json());
+
+    Promise.all([loadModel, loadZones]).then(([_, zones]) => {
+      zonesData = zones;
+      const zone = zonesData[zoneIndex];
+      if (!zone) return;
+
+      const cat = categories[zone.category] || categories["300"];
+      const colorCSS = "#" + cat.color.toString(16).padStart(6, "0");
+
+      document.getElementById("zone-name").textContent = zone.name;
+      const tag = document.getElementById("zone-tag");
+      tag.textContent = cat.label;
+      tag.style.background = colorCSS;
+
+      // Update contact link
+      const subject = encodeURIComponent(`Sponsoring 4L Trophy — ${zone.name}`);
+      const body = encodeURIComponent(`Bonjour,\n\nJe suis intéressé(e) par l'emplacement "${zone.name}" (${cat.label}) sur votre 4L.\n\nCordialement,`);
+      document.getElementById("btn-contact").href = `mailto:landesert.4ltrophy@gmail.com?subject=${subject}&body=${body}`;
+
+      setTimeout(() => {
+        document.getElementById("viewer-hint").style.opacity = "0";
+      }, 5000);
+    });
+
+    // ---- Upload ----
+    const uploadArea = document.getElementById("upload-area");
+    const logoInput = document.getElementById("logo-input");
+    const controlsSection = document.getElementById("controls-section");
+
+    uploadArea.addEventListener("click", () => logoInput.click());
+    uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); });
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) handleFile(file);
+    });
+
+    logoInput.addEventListener("change", (e) => {
+      if (e.target.files[0]) handleFile(e.target.files[0]);
+      logoInput.value = "";
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          logoAspect = img.width / img.height;
+
+          // Show preview
+          uploadArea.innerHTML = "";
+          const preview = document.createElement("img");
+          preview.src = ev.target.result;
+          uploadArea.appendChild(preview);
+          const hint = document.createElement("p");
+          hint.textContent = "Cliquez pour changer";
+          uploadArea.appendChild(hint);
+          uploadArea.classList.add("has-logo");
+
+          // Create texture
+          if (logoTexture) logoTexture.dispose();
+          logoTexture = new THREE.Texture(img);
+          logoTexture.needsUpdate = true;
+
+          controlsSection.classList.add("active");
+          showToast("Cliquez sur la voiture pour placer le logo");
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ---- Size & rotation sliders ----
+    const sizeSlider = document.getElementById("size-slider");
+    const sizeVal = document.getElementById("size-val");
+    const rotSlider = document.getElementById("rotation-slider");
+    const rotVal = document.getElementById("rotation-val");
+
+    sizeSlider.addEventListener("input", () => {
+      sizeVal.textContent = sizeSlider.value + "%";
+      if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    });
+
+    rotSlider.addEventListener("input", () => {
+      rotVal.textContent = rotSlider.value + "°";
+      if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    });
+
+    // ---- Remove ----
+    document.getElementById("btn-remove").addEventListener("click", () => {
+      removeDecal();
+      controlsSection.classList.remove("active");
+      uploadArea.innerHTML = "<p>Cliquez ou glissez une image ici</p>";
+      uploadArea.classList.remove("has-logo");
+      if (logoTexture) { logoTexture.dispose(); logoTexture = null; }
+      lastHitPoint = null;
+      lastHitNormal = null;
+    });
+
+    function removeDecal() {
+      if (decalMesh) {
+        scene.remove(decalMesh);
+        decalMesh.geometry.dispose();
+        decalMesh.material.dispose();
+        decalMesh = null;
+      }
+    }
+
+    // ---- Place logo on click ----
+    const raycaster = new THREE.Raycaster();
+    let mouseDownPos = null;
+
+    renderer.domElement.addEventListener("mousedown", (e) => {
+      mouseDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener("mouseup", (e) => {
+      if (!logoTexture) return;
+      const dx = e.clientX - mouseDownPos.x;
+      const dy = e.clientY - mouseDownPos.y;
+      if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(carMeshes, false);
+      if (hits.length > 0) {
+        lastHitPoint = hits[0].point.clone();
+        // Use zone projection as the normal direction for orientation
+        const zone = zonesData[zoneIndex];
+        if (zone && zone.projection) {
+          lastHitNormal = new THREE.Vector3(...zone.projection).negate(); // outward normal
+        } else {
+          lastHitNormal = hits[0].face.normal.clone();
+          const normalMatrix = new THREE.Matrix3().getNormalMatrix(hits[0].object.matrixWorld);
+          lastHitNormal.applyMatrix3(normalMatrix).normalize();
+        }
+        placeLogo(lastHitPoint, lastHitNormal);
+      }
+    });
+
+    function placeLogo(point, normal) {
+      removeDecal();
+      if (!logoTexture) return;
+
+      const sizePercent = parseInt(sizeSlider.value) / 100;
+      const baseSize = 0.5;
+      const w = baseSize * sizePercent * logoAspect;
+      const h = baseSize * sizePercent;
+      const rotAngle = parseInt(rotSlider.value) * Math.PI / 180;
+
+      const geo = new THREE.PlaneGeometry(w, h);
+      const mat = new THREE.MeshBasicMaterial({
+        map: logoTexture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+      });
+      decalMesh = new THREE.Mesh(geo, mat);
+
+      // Position slightly off the surface
+      decalMesh.position.copy(point).add(normal.clone().multiplyScalar(0.005));
+
+      // Orient the plane to face outward along the normal
+      const lookTarget = point.clone().add(normal);
+      decalMesh.lookAt(lookTarget);
+
+      // Apply user rotation around the normal axis
+      decalMesh.rotateZ(rotAngle);
+
+      decalMesh.renderOrder = 10;
+      scene.add(decalMesh);
+    }
+  </script>
+</body>
+</html>

@@ -24,7 +24,12 @@
         "z": 0.3834
       }
     ],
-    "points_hash": "-1mwwdr"
+    "points_hash": "-1mwwdr",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Porte arriere zone haute gauche",
@@ -51,7 +56,12 @@
         "z": 0.44
       }
     ],
-    "points_hash": "-8g4ua9"
+    "points_hash": "-8g4ua9",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Porte arriere zone basse gauche",
@@ -78,7 +88,12 @@
         "z": 0.4676
       }
     ],
-    "points_hash": "4tvvod"
+    "points_hash": "4tvvod",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Vitre de custode gauche",
@@ -105,7 +120,12 @@
         "z": 0.3864
       }
     ],
-    "points_hash": "pwtxb2"
+    "points_hash": "pwtxb2",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Panneau gauche milieu",
@@ -132,7 +152,12 @@
         "z": 0.425
       }
     ],
-    "points_hash": "m2ah80"
+    "points_hash": "m2ah80",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Panneau gauche basse",
@@ -159,7 +184,12 @@
         "z": 0.467
       }
     ],
-    "points_hash": "fmxx93"
+    "points_hash": "fmxx93",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Bas arriere gauche",
@@ -186,7 +216,12 @@
         "z": 0.4202
       }
     ],
-    "points_hash": "l929lt"
+    "points_hash": "l929lt",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Angle avant gauche",
@@ -213,7 +248,12 @@
         "z": 0.4331
       }
     ],
-    "points_hash": "zb70qr"
+    "points_hash": "zb70qr",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Angle avant haut gauche",
@@ -240,7 +280,12 @@
         "z": 0.4531
       }
     ],
-    "points_hash": "vbz5ki"
+    "points_hash": "vbz5ki",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "avant haut gauche",
@@ -267,7 +312,12 @@
         "z": 0.4616
       }
     ],
-    "points_hash": "ba0uzu"
+    "points_hash": "ba0uzu",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "avant deriere roue gauche",
@@ -294,7 +344,12 @@
         "z": 0.4787
       }
     ],
-    "points_hash": "jmz5i6"
+    "points_hash": "jmz5i6",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
   },
   {
     "name": "Fenetre porte arriere droit",
@@ -321,7 +376,12 @@
         "z": -0.4584
       }
     ],
-    "points_hash": "msjyaj"
+    "points_hash": "msjyaj",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Porte arriere zone haute droit",
@@ -348,7 +408,12 @@
         "z": -0.505
       }
     ],
-    "points_hash": "-zbo6kx"
+    "points_hash": "-zbo6kx",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Porte arriere zone basse droit",
@@ -375,7 +440,12 @@
         "z": -0.5326
       }
     ],
-    "points_hash": "kslpxr"
+    "points_hash": "kslpxr",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Vitre de custode droit",
@@ -402,7 +472,12 @@
         "z": -0.4614
       }
     ],
-    "points_hash": "-edwy6"
+    "points_hash": "-edwy6",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Panneau droit milieu",
@@ -429,7 +504,12 @@
         "z": -0.49
       }
     ],
-    "points_hash": "p2hkj8"
+    "points_hash": "p2hkj8",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Panneau droit basse",
@@ -456,7 +536,12 @@
         "z": -0.532
       }
     ],
-    "points_hash": "-7x6fmv"
+    "points_hash": "-7x6fmv",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Bas arriere droit",
@@ -483,7 +568,12 @@
         "z": -0.4952
       }
     ],
-    "points_hash": "-v1n853"
+    "points_hash": "-v1n853",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Angle avant droit",
@@ -510,7 +600,12 @@
         "z": -0.4881
       }
     ],
-    "points_hash": "-gfw1dw"
+    "points_hash": "-gfw1dw",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Angle avant haut droit",
@@ -537,7 +632,12 @@
         "z": -0.5081
       }
     ],
-    "points_hash": "-l4nf96"
+    "points_hash": "-l4nf96",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "avant haut droit",
@@ -564,7 +664,12 @@
         "z": -0.5166
       }
     ],
-    "points_hash": "-vfm20d"
+    "points_hash": "-vfm20d",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "avant deriere roue droit",
@@ -591,7 +696,12 @@
         "z": -0.5337
       }
     ],
-    "points_hash": "o7ce3c"
+    "points_hash": "o7ce3c",
+    "projection": [
+      0,
+      0,
+      1
+    ]
   },
   {
     "name": "Capot avant haut gauche",
@@ -618,7 +728,12 @@
         "z": 0.3545
       }
     ],
-    "points_hash": "-wnwi1a"
+    "points_hash": "-wnwi1a",
+    "projection": [
+      0,
+      -1,
+      0
+    ]
   },
   {
     "name": "Capot avant bas gauche",
@@ -645,7 +760,12 @@
         "z": 0.01
       }
     ],
-    "points_hash": "-dcwpae"
+    "points_hash": "-dcwpae",
+    "projection": [
+      0,
+      -1,
+      0
+    ]
   },
   {
     "name": "Capot avant haut droit",
@@ -672,7 +792,12 @@
         "z": -0.3745
       }
     ],
-    "points_hash": "-bj7pqw"
+    "points_hash": "-bj7pqw",
+    "projection": [
+      0,
+      -1,
+      0
+    ]
   },
   {
     "name": "Capot avant bas droit",
@@ -699,6 +824,11 @@
         "z": -0.03
       }
     ],
-    "points_hash": "2w053c"
+    "points_hash": "2w053c",
+    "projection": [
+      0,
+      -1,
+      0
+    ]
   }
 ]
