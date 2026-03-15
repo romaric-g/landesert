@@ -83,7 +83,10 @@ export const siteConfig = {
 // Mapping des pièces du modèle 3D :
 // carrosserie = métal, phares, porte droite (model_1)
 export const carColors = {
-  // pas de couleur sur la carrosserie (peinture) — on garde le matériau d'origine
+  peinture: "#a8c7c1",
+  peinture1: "#a8c7c1",
+  peinture2: "#a8c7c1",
+  peinture3: "#a8c7c1",
   caouchou: "#222222",
   metal_noir: "#1a1a1a",
   metal_noir1: "#1a1a1a",

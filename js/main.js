@@ -379,14 +379,8 @@ gltfLoader.load(
       if (child.isMesh) {
         child.geometry.computeVertexNormals();
         const applyColor = (mat) => {
-          // Appliquer les couleurs définies dans config
           if (carColors[mat.name]) {
             mat.color.set(carColors[mat.name]);
-          }
-          // Tout le reste → blanc neutre (retirer textures et couleurs)
-          if (mat.name && !carColors[mat.name]) {
-            mat.color.set("#ffffff");
-            mat.map = null;
           }
           mat.side = THREE.DoubleSide;
         };

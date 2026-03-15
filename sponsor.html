@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Devenir Sponsor — Landesert 4L Trophy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-cream: #FDF6E3;
+      --color-sand: #E8C96D;
+      --color-blue: #5BAFD6;
+      --color-green: #3A7D44;
+      --color-coral: #E85D3A;
+      --color-brown: #6B4226;
+      --color-bg: #FEFCF6;
+      --color-text: #2D2A24;
+      --color-subtle: #8A8070;
+      --color-card: #FFFFFF;
+      --color-border: rgba(107, 66, 38, 0.12);
+      --font-heading: 'Quicksand', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: white;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .header a { text-decoration: none; color: var(--color-brown); }
+    .header .logo { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; }
+    .header .back { font-size: 0.9rem; opacity: 0.7; }
+    .header .back:hover { opacity: 1; }
+
+    /* Main layout */
+    .main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* 3D Viewer */
+    .viewer-panel {
+      flex: 1;
+      position: relative;
+      background: #f0ebe0;
+    }
+    .viewer-panel canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Debug panel */
+    .debug-panel {
+      width: 380px;
+      background: white;
+      border-left: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .debug-panel h2 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-cream);
+    }
+
+    .debug-instructions {
+      padding: 1rem 1.2rem;
+      font-size: 0.85rem;
+      color: var(--color-subtle);
+      border-bottom: 1px solid var(--color-border);
+      line-height: 1.5;
+    }
+
+    .slots-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .slot-card {
+      background: var(--color-cream);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      font-family: monospace;
+      position: relative;
+      border: 1px solid var(--color-border);
+    }
+
+    .slot-card .slot-name {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slot-card .slot-name input {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      color: var(--color-brown);
+    }
+
+    .slot-card code {
+      display: block;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: var(--color-brown);
+      line-height: 1.6;
+    }
+
+    .slot-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .slot-actions button {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      font-family: var(--font-body);
+      background: white;
+      color: var(--color-text);
+      transition: background 0.2s;
+    }
+    .slot-actions button:hover { background: var(--color-cream); }
+    .slot-actions .btn-delete { color: var(--color-coral); border-color: var(--color-coral); }
+    .slot-actions .btn-delete:hover { background: #fde8e2; }
+    .slot-actions .btn-copy { color: var(--color-green); border-color: var(--color-green); }
+    .slot-actions .btn-copy:hover { background: #e2f0e5; }
+
+    /* Size controls */
+    .size-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .size-controls label {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--color-subtle);
+    }
+    .size-controls input[type="number"] {
+      width: 70px;
+      padding: 0.2rem 0.4rem;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--color-brown);
+      background: white;
+    }
+    .size-controls input[type="number"]:focus {
+      outline: none;
+      border-color: var(--color-coral);
+    }
+
+    /* Export bar */
+    .export-bar {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .export-bar button {
+      flex: 1;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .export-bar button:hover { transform: translateY(-1px); }
+    .export-bar .btn-export { background: var(--color-green); color: white; }
+    .export-bar .btn-export:hover { background: #2e6335; }
+    .export-bar .btn-clear { background: var(--color-coral); color: white; }
+    .export-bar .btn-clear:hover { background: #d4431a; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-brown);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: var(--font-heading);
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .viewer-panel { min-height: 50vh; }
+      .debug-panel { width: 100%; max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="index.html" class="back">&larr; Retour au site</a>
+    <a href="index.html" class="logo">LANDESERT</a>
+  </div>
+
+  <div class="main">
+    <div class="viewer-panel">
+      <canvas id="car-viewer"></canvas>
+    </div>
+    <div class="debug-panel">
+      <h2>Emplacements Sponsors</h2>
+      <div class="debug-instructions">
+        <strong>Double-clic</strong> sur la voiture pour ajouter un emplacement.<br>
+        Ajustez la taille avec les sliders. Cliquez sur un emplacement pour le voir.
+      </div>
+      <div class="slots-list" id="slots-list"></div>
+      <div class="export-bar">
+        <button class="btn-export" id="btn-export">Exporter JSON</button>
+        <button class="btn-clear" id="btn-clear">Tout supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { DecalGeometry } from "three/addons/geometries/DecalGeometry.js";
+
+    // ---- Config ----
+    const modelPath = "assets/models/4l.glb";
+    const carColors = {
+      peinture: "#a8c7c1",
+      peinture1: "#a8c7c1",
+      peinture2: "#a8c7c1",
+      peinture3: "#a8c7c1",
+      caouchou: "#222222",
+      metal_noir: "#1a1a1a",
+      metal_noir1: "#1a1a1a",
+      chrome: "#cccccc",
+      cuir: "#3b2a1a",
+    };
+
+    // ---- Three.js setup ----
+    const canvas = document.getElementById("car-viewer");
+    const container = canvas.parentElement;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0ebe0);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(3, 2, 4);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.4;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 8;
+    controls.maxPolarAngle = Math.PI / 2 + 0.2;
+
+    // Lighting
+    const dirLight = new THREE.DirectionalLight(0xffeedd, 3);
+    dirLight.position.set(5, 8, 3);
+    scene.add(dirLight);
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0xe8c96d, 1.2));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    // Ground
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(6, 48),
+      new THREE.MeshStandardMaterial({ color: 0xe0d8c8 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    scene.add(ground);
+
+    // Axes helper
+    scene.add(new THREE.AxesHelper(3));
+
+    // ---- State ----
+    const carMeshes = [];
+    const slots = [];  // { id, name, position, normal, orientation, size, decalMeshes, marker, arrow }
+    let slotCounter = 0;
+
+    // ---- Load model ----
+    const loader = new GLTFLoader();
+    loader.load(modelPath, (gltf) => {
+      const model = gltf.scene;
+
+      model.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 2.5 / maxDim;
+      model.scale.setScalar(scale);
+
+      model.updateMatrixWorld(true);
+      const box2 = new THREE.Box3().setFromObject(model);
+      const center2 = box2.getCenter(new THREE.Vector3());
+      model.position.x -= center2.x;
+      model.position.z -= center2.z;
+      model.position.y -= box2.min.y;
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.geometry.computeVertexNormals();
+          const applyColor = (mat) => {
+            if (carColors[mat.name]) mat.color.set(carColors[mat.name]);
+            mat.side = THREE.DoubleSide;
+          };
+          if (Array.isArray(child.material)) {
+            child.material.forEach(applyColor);
+          } else {
+            applyColor(child.material);
+          }
+          carMeshes.push(child);
+        }
+      });
+
+      scene.add(model);
+    });
+
+    // ---- Resize ----
+    new ResizeObserver(() => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }).observe(container);
+
+    // ---- Animate ----
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // ---- Helpers ----
+    const markerGeo = new THREE.SphereGeometry(0.02, 8, 8);
+    const markerMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    const placeholderTexture = createPlaceholderTexture();
+
+    function createPlaceholderTexture() {
+      const size = 256;
+      const c = document.createElement("canvas");
+      c.width = size; c.height = size;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "rgba(232, 93, 58, 0.4)";
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = "#E85D3A";
+      ctx.lineWidth = 6;
+      ctx.setLineDash([12, 8]);
+      ctx.strokeRect(8, 8, size - 16, size - 16);
+      ctx.fillStyle = "#E85D3A";
+      ctx.font = "bold 28px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("SPONSOR", size / 2, size / 2);
+      const tex = new THREE.CanvasTexture(c);
+      return tex;
+    }
+
+    function createSlotDecals(slot) {
+      // Remove old decals
+      slot.decalMeshes.forEach(m => scene.remove(m));
+      slot.decalMeshes = [];
+
+      const position = new THREE.Vector3(slot.position.x, slot.position.y, slot.position.z);
+      const orientation = new THREE.Euler(slot.orientation.x, slot.orientation.y, slot.orientation.z);
+      const size = new THREE.Vector3(slot.size.width, slot.size.height, slot.size.depth);
+
+      for (const mesh of carMeshes) {
+        try {
+          const decalGeo = new DecalGeometry(mesh, position, orientation, size);
+          if (decalGeo.attributes.position.count === 0) continue;
+          const decalMat = new THREE.MeshStandardMaterial({
+            map: placeholderTexture,
+            transparent: true,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: -4,
+            roughness: 0.5,
+            metalness: 0.1,
+          });
+          const decalMesh = new THREE.Mesh(decalGeo, decalMat);
+          decalMesh.renderOrder = 1;
+          scene.add(decalMesh);
+          slot.decalMeshes.push(decalMesh);
+        } catch (e) {}
+      }
+    }
+
+    // ---- Double-click to add slot ----
+    renderer.domElement.addEventListener("dblclick", (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(mouse, camera);
+
+      const intersects = ray.intersectObjects(carMeshes, true);
+      if (intersects.length === 0) return;
+
+      const hit = intersects[0];
+      const p = hit.point;
+      const n = hit.face.normal.clone();
+      const normalMatrix = new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld);
+      n.applyMatrix3(normalMatrix).normalize();
+
+      slotCounter++;
+      const slot = {
+        id: slotCounter,
+        name: `Emplacement ${slotCounter}`,
+        position: { x: +p.x.toFixed(3), y: +p.y.toFixed(3), z: +p.z.toFixed(3) },
+        normal: { x: +n.x.toFixed(3), y: +n.y.toFixed(3), z: +n.z.toFixed(3) },
+        orientation: {
+          x: +Math.atan2(n.y, n.z).toFixed(3),
+          y: +Math.atan2(n.x, n.z).toFixed(3),
+          z: 0
+        },
+        size: { width: 0.3, height: 0.2, depth: 0.3 },
+        decalMeshes: [],
+        marker: null,
+        arrow: null,
+      };
+
+      // Visual markers
+      const marker = new THREE.Mesh(markerGeo, markerMat);
+      marker.position.copy(p);
+      scene.add(marker);
+      slot.marker = marker;
+
+      const arrow = new THREE.ArrowHelper(n, p, 0.15, 0xff00ff);
+      scene.add(arrow);
+      slot.arrow = arrow;
+
+      // Create decal
+      createSlotDecals(slot);
+
+      slots.push(slot);
+      renderSlotsList();
+      showToast(`Emplacement ${slotCounter} ajouté`);
+    });
+
+    // ---- UI ----
+    const slotsListEl = document.getElementById("slots-list");
+
+    function renderSlotsList() {
+      slotsListEl.innerHTML = "";
+      slots.forEach((slot, i) => {
+        const card = document.createElement("div");
+        card.className = "slot-card";
+        card.innerHTML = `
+          <div class="slot-name">
+            <input type="text" value="${slot.name}" data-idx="${i}" class="name-input">
+          </div>
+          <div class="size-controls">
+            <label>Pos X</label>
+            <input type="number" step="0.001" value="${slot.position.x}" data-group="position" data-dim="x">
+            <label>Y</label>
+            <input type="number" step="0.001" value="${slot.position.y}" data-group="position" data-dim="y">
+            <label>Z</label>
+            <input type="number" step="0.001" value="${slot.position.z}" data-group="position" data-dim="z">
+          </div>
+          <div class="size-controls">
+            <label>Rot X</label>
+            <input type="number" step="0.01" value="${slot.orientation.x}" data-group="orientation" data-dim="x">
+            <label>Y</label>
+            <input type="number" step="0.01" value="${slot.orientation.y}" data-group="orientation" data-dim="y">
+            <label>Z</label>
+            <input type="number" step="0.01" value="${slot.orientation.z}" data-group="orientation" data-dim="z">
+          </div>
+          <div class="size-controls">
+            <label>Largeur</label>
+            <input type="number" min="0.01" max="2" step="0.01" value="${slot.size.width}" data-group="size" data-dim="width">
+            <label>Hauteur</label>
+            <input type="number" min="0.01" max="2" step="0.01" value="${slot.size.height}" data-group="size" data-dim="height">
+          </div>
+          <div class="slot-actions">
+            <button class="btn-copy" data-idx="${i}">Copier</button>
+            <button class="btn-delete" data-idx="${i}">Supprimer</button>
+          </div>
+        `;
+
+        // Name editing
+        card.querySelector(".name-input").addEventListener("change", (e) => {
+          slot.name = e.target.value;
+        });
+
+        // All number inputs (position, orientation, size)
+        card.querySelectorAll('input[type="number"]').forEach((input) => {
+          input.addEventListener("input", (e) => {
+            const group = e.target.dataset.group;
+            const dim = e.target.dataset.dim;
+            const val = +parseFloat(e.target.value);
+            if (isNaN(val)) return;
+            slot[group][dim] = +val.toFixed(3);
+            // Update marker position
+            if (group === "position" && slot.marker) {
+              slot.marker.position.set(slot.position.x, slot.position.y, slot.position.z);
+            }
+            createSlotDecals(slot);
+          });
+        });
+
+        // Copy
+        card.querySelector(".btn-copy").addEventListener("click", () => {
+          const data = {
+            name: slot.name,
+            position: slot.position,
+            orientation: slot.orientation,
+            size: slot.size,
+          };
+          navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+          showToast("Copié dans le presse-papier");
+        });
+
+        // Delete
+        card.querySelector(".btn-delete").addEventListener("click", () => {
+          slot.decalMeshes.forEach(m => scene.remove(m));
+          if (slot.marker) scene.remove(slot.marker);
+          if (slot.arrow) scene.remove(slot.arrow);
+          slots.splice(i, 1);
+          renderSlotsList();
+          showToast("Emplacement supprimé");
+        });
+
+        // Click card to focus camera
+        card.addEventListener("click", (e) => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+          const pos = new THREE.Vector3(slot.position.x, slot.position.y, slot.position.z);
+          const norm = new THREE.Vector3(slot.normal.x, slot.normal.y, slot.normal.z);
+          const camTarget = pos.clone().add(norm.multiplyScalar(2.5));
+          camTarget.y = Math.max(camTarget.y, 0.5);
+
+          const startPos = camera.position.clone();
+          const startTarget = controls.target.clone();
+          const duration = 600;
+          const startTime = performance.now();
+
+          function anim(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 3);
+            camera.position.lerpVectors(startPos, camTarget, ease);
+            controls.target.lerpVectors(startTarget, pos, ease);
+            controls.update();
+            if (t < 1) requestAnimationFrame(anim);
+          }
+          requestAnimationFrame(anim);
+        });
+
+        slotsListEl.appendChild(card);
+      });
+    }
+
+    // ---- Export all slots as JSON ----
+    document.getElementById("btn-export").addEventListener("click", () => {
+      const data = slots.map(s => ({
+        name: s.name,
+        position: s.position,
+        orientation: s.orientation,
+        size: s.size,
+      }));
+      const json = JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(json);
+      showToast("JSON exporté dans le presse-papier !");
+      console.log("Exported slots:", json);
+    });
+
+    // ---- Clear all ----
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      slots.forEach(s => {
+        s.decalMeshes.forEach(m => scene.remove(m));
+        if (s.marker) scene.remove(s.marker);
+        if (s.arrow) scene.remove(s.arrow);
+      });
+      slots.length = 0;
+      slotCounter = 0;
+      renderSlotsList();
+      showToast("Tous les emplacements supprimés");
+    });
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+  </script>
+</body>
+</html>

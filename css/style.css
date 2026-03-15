@@ -700,6 +700,25 @@ section {
   transform: translateY(-2px);
 }
 
+.btn-sponsor {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-green);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.btn-sponsor:hover {
+  background: #2e6335;
+  transform: translateY(-2px);
+}
+
 /* ---- Gallery ---- */
 
 .gallery-grid {
