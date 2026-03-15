@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import { DecalGeometry } from "three/addons/geometries/DecalGeometry.js";
-import { siteConfig, modelPath, sponsors, socialLinks, carColors } from "./config.js";
+// DecalGeometry no longer used — sponsors use grid-based projection
+import { siteConfig, modelPath, socialLinks, carColors } from "./config.js";
 
 // ---- DOM refs ----
 const canvas = document.getElementById("car-viewer");
@@ -99,37 +99,44 @@ if (siteConfig.contact && emailBtn) {
 // ---- Build sponsors list (left panel) ----
 const sponsorsList = document.querySelector(".sponsors-list");
 const sponsorCardEls = [];
-sponsors.forEach((sp, index) => {
-  const card = document.createElement("div");
-  card.className = "sponsor-card fade-in";
-  card.dataset.sponsorIndex = index;
+let sponsors = [];
 
-  const logoDiv = document.createElement("div");
-  logoDiv.className = "sponsor-card-logo";
-  logoDiv.style.background = sp.color;
-  if (sp.logo) {
-    logoDiv.innerHTML = `<img src="${sp.logo}" alt="${sp.name}">`;
-  } else {
-    logoDiv.textContent = sp.name.charAt(0);
-  }
+// Load sponsors from JSON
+const sponsorsReady = fetch("assets/sponsors.json")
+  .then(r => r.json())
+  .then(data => {
+    sponsors = data;
+    sponsors.forEach((sp, index) => {
+      const card = document.createElement("div");
+      card.className = "sponsor-card fade-in visible";
+      card.dataset.sponsorIndex = index;
 
-  const info = document.createElement("div");
-  info.className = "sponsor-card-info";
-  info.innerHTML = `
-    <div class="sponsor-card-name">${sp.name}</div>
-    <div class="sponsor-card-desc">${sp.description}</div>
-  `;
+      const logoDiv = document.createElement("div");
+      logoDiv.className = "sponsor-card-logo";
+      if (sp.image) {
+        logoDiv.innerHTML = `<img src="${sp.image}" alt="${sp.name}">`;
+      } else {
+        logoDiv.textContent = sp.name.charAt(0);
+      }
 
-  card.appendChild(logoDiv);
-  card.appendChild(info);
-  sponsorsList.appendChild(card);
-  sponsorCardEls.push(card);
+      const info = document.createElement("div");
+      info.className = "sponsor-card-info";
+      info.innerHTML = `
+        <div class="sponsor-card-name">${sp.name}</div>
+        <div class="sponsor-card-desc">${sp.description}</div>
+      `;
 
-  // Click -> focus camera on this sponsor's decal
-  card.addEventListener("click", () => {
-    focusOnSponsor(sp, index);
+      card.appendChild(logoDiv);
+      card.appendChild(info);
+      sponsorsList.appendChild(card);
+      sponsorCardEls.push(card);
+
+      card.addEventListener("click", () => {
+        focusOnSponsor(sp, index);
+      });
+
+    });
   });
-});
 
 // ---- Mobile menu toggle ----
 const menuToggle = document.querySelector(".menu-toggle");
@@ -222,45 +229,136 @@ controls.addEventListener("end", () => {
 const carMeshes = [];
 const decalMeshes = [];
 
-// ---- Decal creation ----
-const textureLoader = new THREE.TextureLoader();
+// ---- Sponsor decal creation (grid-based projection) ----
+let zonesData = [];
+
+const RAY_BACKOFF = 1.0;
+const projRC = new THREE.Raycaster();
+
+function projectPoint(point, direction) {
+  const origin = new THREE.Vector3(
+    point.x - direction.x * RAY_BACKOFF,
+    point.y - direction.y * RAY_BACKOFF,
+    point.z - direction.z * RAY_BACKOFF
+  );
+  projRC.set(origin, direction);
+  projRC.far = 1.5;
+  const hits = projRC.intersectObjects(carMeshes, false);
+  if (hits.length > 0) {
+    const hit = hits[0].point.clone();
+    hit.x -= direction.x * 0.003;
+    hit.y -= direction.y * 0.003;
+    hit.z -= direction.z * 0.003;
+    return hit;
+  }
+  return new THREE.Vector3(point.x, point.y, point.z);
+}
 
 function createSponsorDecals() {
+  if (zonesData.length === 0 || sponsors.length === 0) return;
+
   sponsors.forEach((sp) => {
-    if (!sp.decal || !sp.logo) return;
+    if (!sp.image) return;
+    const zone = zonesData[sp.zone];
+    if (!zone) return;
 
-    const d = sp.decal;
-    const position = new THREE.Vector3(d.position.x, d.position.y, d.position.z);
-    const orientation = new THREE.Euler(d.orientation.x, d.orientation.y, d.orientation.z);
-    const size = new THREE.Vector3(d.size.width, d.size.height, d.size.depth);
+    const projDir = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
 
-    const texture = textureLoader.load(sp.logo, () => {
-      for (const mesh of carMeshes) {
-        try {
-          const decalGeo = new DecalGeometry(mesh, position, orientation, size);
-          if (decalGeo.attributes.position.count === 0) continue;
+    // Compute zone center
+    const center = new THREE.Vector3();
+    zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
+    center.divideScalar(zone.points.length);
 
-          const decalMat = new THREE.MeshStandardMaterial({
-            map: texture,
-            transparent: true,
-            depthWrite: false,
-            depthTest: true,
-            polygonOffset: true,
-            polygonOffsetFactor: -4,
-            roughness: 0.5,
-            metalness: 0.1,
-          });
+    // Build local coordinate frame
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    if (Math.abs(projDir.y) > 0.9) {
+      right.set(1, 0, 0);
+      up.crossVectors(right, projDir).normalize();
+      right.crossVectors(projDir, up).normalize();
+    } else {
+      up.set(0, 1, 0);
+      right.crossVectors(up, projDir).normalize();
+      up.crossVectors(projDir, right).normalize();
+    }
 
-          const decalMesh = new THREE.Mesh(decalGeo, decalMat);
-          decalMesh.userData.sponsor = sp;
-          decalMesh.renderOrder = 1;
-          scene.add(decalMesh);
-          decalMeshes.push(decalMesh);
-        } catch (e) {
-          // DecalGeometry can fail if position doesn't intersect mesh
+    // Apply rotation
+    const rotAngle = (sp.params.rotation || 0) * Math.PI / 180;
+    if (rotAngle !== 0) {
+      const q = new THREE.Quaternion().setFromAxisAngle(projDir, rotAngle);
+      right.applyQuaternion(q);
+      up.applyQuaternion(q);
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const texture = new THREE.Texture(img);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+      const logoAspect = img.width / img.height;
+      const sizePercent = (sp.params.size || 50) / 100;
+      const baseSize = 0.5;
+      const w = baseSize * sizePercent * logoAspect;
+      const h = baseSize * sizePercent;
+      const flip = sp.params.flip || false;
+
+      const GRID = 10;
+      const gridPts = [];
+      const gridUVs = [];
+      for (let row = 0; row <= GRID; row++) {
+        gridPts[row] = [];
+        gridUVs[row] = [];
+        for (let col = 0; col <= GRID; col++) {
+          const u = (col / GRID - 0.5) * w;
+          const v = (row / GRID - 0.5) * h;
+          const pt = center.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          gridPts[row][col] = projectPoint(pt, projDir);
+          const uCoord = flip ? col / GRID : 1 - col / GRID;
+          gridUVs[row][col] = { u: uCoord, v: row / GRID };
         }
       }
-    });
+
+      const positions = [];
+      const uvs = [];
+      for (let row = 0; row < GRID; row++) {
+        for (let col = 0; col < GRID; col++) {
+          const a = gridPts[row][col], b = gridPts[row][col + 1];
+          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
+          const uvA = gridUVs[row][col], uvB = gridUVs[row][col + 1];
+          const uvC = gridUVs[row + 1][col], uvD = gridUVs[row + 1][col + 1];
+          positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          uvs.push(uvA.u, uvA.v, uvB.u, uvB.v, uvC.u, uvC.v);
+          positions.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
+          uvs.push(uvB.u, uvB.v, uvD.u, uvD.v, uvC.u, uvC.v);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        roughness: 0.5,
+        metalness: 0.0,
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.userData.sponsor = sp;
+      mesh.renderOrder = 1;
+      scene.add(mesh);
+      decalMeshes.push(mesh);
+    };
+    img.src = sp.image;
   });
 }
 
@@ -272,23 +370,25 @@ function focusOnSponsor(sp, index) {
   sponsorCardEls.forEach((el) => el.classList.remove("active"));
   sponsorCardEls[index].classList.add("active");
 
-  if (!sp.decal) return;
+  const zone = zonesData[sp.zone];
+  if (!zone) return;
 
-  const d = sp.decal;
-  const targetPos = new THREE.Vector3(d.position.x, d.position.y, d.position.z);
+  // Compute zone center
+  const targetPos = new THREE.Vector3();
+  zone.points.forEach(p => targetPos.add(new THREE.Vector3(p.x, p.y, p.z)));
+  targetPos.divideScalar(zone.points.length);
 
-  // Compute camera position: offset from decal position along the viewing direction
-  let cameraOffset;
-  if (Math.abs(d.orientation.y) > 0.1) {
-    // Side decal — view from the side
-    const side = d.orientation.y > 0 ? 1 : -1;
-    cameraOffset = new THREE.Vector3(side * 2.5, 0.8, 0.5);
+  // Camera direction from zone projection
+  let camDir;
+  const proj = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
+  if (Math.abs(proj.y) > 0.9) {
+    camDir = new THREE.Vector3(-0.5, 0.8, 0.5).normalize();
   } else {
-    // Top decal — view from above-front
-    cameraOffset = new THREE.Vector3(0.5, 2.5, 2);
+    camDir = proj.clone().negate();
+    camDir.y += 0.4;
+    camDir.normalize();
   }
-
-  const newCamPos = targetPos.clone().add(cameraOffset);
+  const newCamPos = targetPos.clone().add(camDir.multiplyScalar(2.5));
 
   // Animate camera
   controls.autoRotate = false;
@@ -396,7 +496,14 @@ gltfLoader.load(
     scene.add(model);
 
     model.updateMatrixWorld(true);
-    createSponsorDecals();
+    // Wait for both zones and sponsors before placing decals
+    Promise.all([
+      fetch("assets/zones.json").then(r => r.json()),
+      sponsorsReady,
+    ]).then(([zones]) => {
+      zonesData = zones;
+      createSponsorDecals();
+    });
     hideLoader();
 
     if (siteConfig.devMode) {
@@ -412,7 +519,13 @@ gltfLoader.load(
   () => {
     console.warn("GLB model not found, using placeholder car");
     createPlaceholderCar();
-    createSponsorDecals();
+    Promise.all([
+      fetch("assets/zones.json").then(r => r.json()),
+      sponsorsReady,
+    ]).then(([zones]) => {
+      zonesData = zones;
+      createSponsorDecals();
+    });
     hideLoader();
     if (siteConfig.devMode) addDevHelpers();
   }
@@ -543,15 +656,16 @@ let backdropEl = null;
 function showSponsorPopup(sp) {
   popup.querySelector(".popup-name").textContent = sp.name;
   popup.querySelector(".popup-description").textContent = sp.description;
-  popup.querySelector(".popup-link").href = sp.url;
+  const popupLink = popup.querySelector(".popup-link");
+  if (popupLink) popupLink.href = sp.url || "#";
 
   const logoContainer = popup.querySelector(".popup-logo");
-  if (sp.logo) {
-    logoContainer.innerHTML = `<img src="${sp.logo}" alt="${sp.name}">`;
+  if (sp.image) {
+    logoContainer.innerHTML = `<img src="${sp.image}" alt="${sp.name}">`;
     logoContainer.style.background = "transparent";
   } else {
     logoContainer.innerHTML = sp.name.charAt(0);
-    logoContainer.style.background = sp.color;
+    logoContainer.style.background = "#6B4226";
     logoContainer.style.color = "white";
     logoContainer.style.fontSize = "2rem";
     logoContainer.style.fontFamily = "var(--font-heading)";

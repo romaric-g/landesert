@@ -705,7 +705,7 @@
   },
   {
     "name": "Capot avant haut gauche",
-    "category": "1000",
+    "category": "500",
     "points": [
       {
         "x": -0.47,
@@ -737,7 +737,7 @@
   },
   {
     "name": "Capot avant bas gauche",
-    "category": "1000",
+    "category": "500",
     "points": [
       {
         "x": -0.7927,
@@ -769,7 +769,7 @@
   },
   {
     "name": "Capot avant haut droit",
-    "category": "1000",
+    "category": "500",
     "points": [
       {
         "x": -0.47,
@@ -801,7 +801,7 @@
   },
   {
     "name": "Capot avant bas droit",
-    "category": "1000",
+    "category": "500",
     "points": [
       {
         "x": -0.7927,

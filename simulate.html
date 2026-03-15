@@ -206,6 +206,25 @@
       background: #fde8e2;
     }
 
+    .btn-export {
+      display: none;
+      width: 100%;
+      padding: 0.5rem;
+      background: var(--color-brown);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+    .btn-export:hover {
+      background: #553218;
+    }
+
     .contact-bar {
       padding: 1rem 1.2rem;
       border-top: 1px solid var(--color-border);
@@ -307,6 +326,7 @@
         <p class="hint" style="margin-top:0.8rem;">Cliquez sur la voiture pour repositionner le logo.</p>
 
         <button class="btn-remove" id="btn-remove">Retirer le logo</button>
+        <button class="btn-export" id="btn-export">Exporter sponsor (JSON)</button>
       </div>
 
       <div class="contact-bar">
@@ -329,7 +349,7 @@
   <script type="module">
     import * as THREE from "three";
     import {
-      createScene, loadCarModel, showToast, zoneHash, animateCameraToZone
+      createScene, loadCarModel, showToast, zoneHash, animateCameraToZone, isDevMode
     } from "./assets/js/common.js";
 
     // ---- Parse zone param ----
@@ -343,8 +363,8 @@
       "200":  { label: "200 €",  color: 0x1b5e20 },
       "300":  { label: "300 €",  color: 0xb8860b },
       "400":  { label: "400 €",  color: 0xc05000 },
+      "500":  { label: "500 €",  color: 0xcc0000 },
       "600":  { label: "600 €",  color: 0xe85d3a },
-      "1000": { label: "1000 €", color: 0xcc0000 },
     };
 
     // ---- Scene setup ----
@@ -813,6 +833,44 @@
       decalMesh.renderOrder = 10;
       scene.add(decalMesh);
     }
+    // ---- Dev mode: export sponsor JSON ----
+    const btnExport = document.getElementById("btn-export");
+    if (isDevMode()) {
+      btnExport.style.display = "block";
+    }
+
+    btnExport.addEventListener("click", () => {
+      if (!logoTexture) {
+        showToast("Aucun logo à exporter");
+        return;
+      }
+      const zone = zonesData[zoneIndex];
+      if (!zone) return;
+
+      const sponsorData = {
+        name: "",
+        description: "",
+        zone: zoneIndex,
+        zoneName: zone.name,
+        category: zone.category,
+        image: localStorage.getItem(LS_IMG_KEY),
+        params: {
+          size: parseInt(sizeSlider.value),
+          rotation: parseInt(rotSlider.value),
+          flip: flipCheckbox.checked,
+        },
+      };
+
+      const blob = new Blob([JSON.stringify(sponsorData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = zone.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/_+$/, "");
+      a.download = `sponsor_${safeName}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Sponsor exporté !");
+    });
   </script>
 </body>
 </html>
