@@ -55,7 +55,7 @@ export const siteConfig = {
         name: "Cyprien Gauzi",
         role: "Pilote",
         description:
-          "Étudiant en 2ème année de BTS Maintenance des Véhicules à Dax. " +
+          "Employé en mécanique agricole chez AgriVision. " +
           "Passionné d'automobile et de mécanique, c'est lui qui prépare notre 4L.",
       },
     ],
