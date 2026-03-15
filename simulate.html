@@ -298,7 +298,12 @@
           <span class="slider-val" id="rotation-val">0°</span>
         </div>
 
-        <p class="hint">Cliquez sur la voiture pour repositionner le logo.</p>
+        <label style="margin-top:0.5rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
+          <input type="checkbox" id="flip-checkbox">
+          Inverser horizontalement
+        </label>
+
+        <p class="hint" style="margin-top:0.8rem;">Cliquez sur la voiture pour repositionner le logo.</p>
 
         <button class="btn-remove" id="btn-remove">Retirer le logo</button>
       </div>
@@ -352,6 +357,7 @@
     let decalMesh = null;
     let lastHitPoint = null;
     let lastHitNormal = null;
+    let previewGroup = null; // dot + square preview
 
     // ---- Load model + zones ----
     const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); });
@@ -375,10 +381,163 @@
       const body = encodeURIComponent(`Bonjour,\n\nJe suis intéressé(e) par l'emplacement "${zone.name}" (${cat.label}) sur votre 4L.\n\nCordialement,`);
       document.getElementById("btn-contact").href = `mailto:landesert.4ltrophy@gmail.com?subject=${subject}&body=${body}`;
 
+      // Show zone preview: project center onto car surface
+      scene.updateMatrixWorld(true);
+      showZonePreview(zone);
+
       setTimeout(() => {
         document.getElementById("viewer-hint").style.opacity = "0";
       }, 5000);
     });
+
+    // ---- Projection helper ----
+    const RAY_BACKOFF = 1.0;
+    const projRC = new THREE.Raycaster();
+
+    function projectPoint(point, direction) {
+      const origin = new THREE.Vector3(
+        point.x - direction.x * RAY_BACKOFF,
+        point.y - direction.y * RAY_BACKOFF,
+        point.z - direction.z * RAY_BACKOFF
+      );
+      projRC.set(origin, direction);
+      projRC.far = 1.5;
+      const hits = projRC.intersectObjects(carMeshes, false);
+      if (hits.length > 0) {
+        const hit = hits[0].point.clone();
+        // Offset slightly off surface
+        hit.x -= direction.x * 0.003;
+        hit.y -= direction.y * 0.003;
+        hit.z -= direction.z * 0.003;
+        return hit;
+      }
+      return new THREE.Vector3(point.x, point.y, point.z);
+    }
+
+    // ---- Zone preview (projected white square on car surface) ----
+    function showZonePreview(zone) {
+      const projDir = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
+      const normal = projDir.clone().negate();
+
+      // Compute zone center
+      const center = new THREE.Vector3();
+      zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
+      center.divideScalar(zone.points.length);
+
+      // Build a local coordinate frame perpendicular to projection
+      const right = new THREE.Vector3();
+      const up = new THREE.Vector3();
+      if (Math.abs(projDir.y) > 0.9) {
+        // Projecting downward (capot) — right = X, up = Z
+        right.set(1, 0, 0);
+        up.crossVectors(right, projDir).normalize();
+        right.crossVectors(projDir, up).normalize();
+      } else {
+        // Projecting sideways — right = along car length, up = Y
+        up.set(0, 1, 0);
+        right.crossVectors(up, projDir).normalize();
+        up.crossVectors(projDir, right).normalize();
+      }
+
+      const squareSize = 0.25;
+      const GRID = 5;
+
+      // Generate grid of 3D points, project each onto car
+      const gridPts = [];
+      for (let row = 0; row <= GRID; row++) {
+        gridPts[row] = [];
+        for (let col = 0; col <= GRID; col++) {
+          const u = (col / GRID - 0.5) * squareSize;
+          const v = (row / GRID - 0.5) * squareSize;
+          const pt = center.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          gridPts[row][col] = projectPoint(pt, projDir);
+        }
+      }
+
+      // Build projected fill mesh
+      const vertices = [];
+      for (let row = 0; row < GRID; row++) {
+        for (let col = 0; col < GRID; col++) {
+          const a = gridPts[row][col], b = gridPts[row][col + 1];
+          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
+          vertices.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          vertices.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
+        }
+      }
+
+      previewGroup = new THREE.Group();
+
+      // White fill
+      const fillGeo = new THREE.BufferGeometry();
+      fillGeo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      fillGeo.computeVertexNormals();
+      const fillMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const fillMesh = new THREE.Mesh(fillGeo, fillMat);
+      fillMesh.renderOrder = 18;
+      previewGroup.add(fillMesh);
+
+      // Outline: project the 4 edges
+      const edgeSubdiv = 8;
+      const outlinePts = [];
+      const corners = [
+        [-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]
+      ];
+      for (let e = 0; e < 4; e++) {
+        const [u0, v0] = corners[e];
+        const [u1, v1] = corners[(e + 1) % 4];
+        for (let i = 0; i <= edgeSubdiv; i++) {
+          const t = i / edgeSubdiv;
+          const u = (u0 + (u1 - u0) * t) * squareSize;
+          const v = (v0 + (v1 - v0) * t) * squareSize;
+          const pt = center.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          outlinePts.push(projectPoint(pt, projDir));
+        }
+      }
+      const linePositions = [];
+      outlinePts.forEach(p => linePositions.push(p.x, p.y, p.z));
+      const lineGeo = new THREE.BufferGeometry();
+      lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+      const line = new THREE.LineLoop(lineGeo, lineMat);
+      line.renderOrder = 19;
+      previewGroup.add(line);
+
+      // Red dot at projected center
+      const centerProj = projectPoint(center, projDir);
+      const dotGeo = new THREE.SphereGeometry(0.012, 16, 16);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0xff0000, depthTest: false });
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.position.copy(centerProj).add(normal.clone().multiplyScalar(0.005));
+      dot.renderOrder = 20;
+      previewGroup.add(dot);
+
+      scene.add(previewGroup);
+
+      // Set initial hit point for logo placement
+      lastHitPoint = centerProj.clone();
+      lastHitNormal = normal.clone();
+    }
+
+    function removePreview() {
+      if (previewGroup) {
+        previewGroup.traverse(child => {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) child.material.dispose();
+        });
+        scene.remove(previewGroup);
+        previewGroup = null;
+      }
+    }
 
     // ---- Upload ----
     const uploadArea = document.getElementById("upload-area");
@@ -421,7 +580,11 @@
           logoTexture.needsUpdate = true;
 
           controlsSection.classList.add("active");
-          showToast("Cliquez sur la voiture pour placer le logo");
+
+          // Place logo at zone center by default
+          if (lastHitPoint && lastHitNormal) {
+            placeLogo(lastHitPoint, lastHitNormal);
+          }
         };
         img.src = ev.target.result;
       };
@@ -444,6 +607,11 @@
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 
+    const flipCheckbox = document.getElementById("flip-checkbox");
+    flipCheckbox.addEventListener("change", () => {
+      if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    });
+
     // ---- Remove ----
     document.getElementById("btn-remove").addEventListener("click", () => {
       removeDecal();
@@ -453,6 +621,9 @@
       if (logoTexture) { logoTexture.dispose(); logoTexture = null; }
       lastHitPoint = null;
       lastHitNormal = null;
+      // Restore zone preview
+      const zone = zonesData[zoneIndex];
+      if (zone) showZonePreview(zone);
     });
 
     function removeDecal() {
@@ -502,15 +673,84 @@
 
     function placeLogo(point, normal) {
       removeDecal();
+      removePreview();
       if (!logoTexture) return;
+
+      const zone = zonesData[zoneIndex];
+      const projDir = zone && zone.projection
+        ? new THREE.Vector3(...zone.projection)
+        : normal.clone().negate();
+
+      // Build local coordinate frame perpendicular to projection direction
+      const right = new THREE.Vector3();
+      const up = new THREE.Vector3();
+      if (Math.abs(projDir.y) > 0.9) {
+        right.set(1, 0, 0);
+        up.crossVectors(right, projDir).normalize();
+        right.crossVectors(projDir, up).normalize();
+      } else {
+        up.set(0, 1, 0);
+        right.crossVectors(up, projDir).normalize();
+        up.crossVectors(projDir, right).normalize();
+      }
+
+      // Apply rotation: rotate right and up vectors around projDir
+      const rotAngle = parseInt(rotSlider.value) * Math.PI / 180;
+      if (rotAngle !== 0) {
+        const q = new THREE.Quaternion().setFromAxisAngle(projDir, rotAngle);
+        right.applyQuaternion(q);
+        up.applyQuaternion(q);
+      }
 
       const sizePercent = parseInt(sizeSlider.value) / 100;
       const baseSize = 0.5;
       const w = baseSize * sizePercent * logoAspect;
       const h = baseSize * sizePercent;
-      const rotAngle = parseInt(rotSlider.value) * Math.PI / 180;
 
-      const geo = new THREE.PlaneGeometry(w, h);
+      const GRID = 10;
+      // Generate grid points, project each onto car surface
+      const gridPts = [];
+      const gridUVs = [];
+      for (let row = 0; row <= GRID; row++) {
+        gridPts[row] = [];
+        gridUVs[row] = [];
+        for (let col = 0; col <= GRID; col++) {
+          const u = (col / GRID - 0.5) * w;
+          const v = (row / GRID - 0.5) * h;
+          const pt = point.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          gridPts[row][col] = projectPoint(pt, projDir);
+          const uCoord = flipCheckbox.checked ? col / GRID : 1 - col / GRID;
+          gridUVs[row][col] = { u: uCoord, v: row / GRID };
+        }
+      }
+
+      // Build triangles with positions and UVs
+      const positions = [];
+      const uvs = [];
+      for (let row = 0; row < GRID; row++) {
+        for (let col = 0; col < GRID; col++) {
+          const a = gridPts[row][col], b = gridPts[row][col + 1];
+          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
+          const uvA = gridUVs[row][col], uvB = gridUVs[row][col + 1];
+          const uvC = gridUVs[row + 1][col], uvD = gridUVs[row + 1][col + 1];
+
+          // Triangle 1: a, b, c
+          positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          uvs.push(uvA.u, uvA.v, uvB.u, uvB.v, uvC.u, uvC.v);
+
+          // Triangle 2: b, d, c
+          positions.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
+          uvs.push(uvB.u, uvB.v, uvD.u, uvD.v, uvC.u, uvC.v);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.computeVertexNormals();
+
       const mat = new THREE.MeshBasicMaterial({
         map: logoTexture,
         transparent: true,
@@ -519,18 +759,8 @@
         polygonOffset: true,
         polygonOffsetFactor: -4,
       });
+
       decalMesh = new THREE.Mesh(geo, mat);
-
-      // Position slightly off the surface
-      decalMesh.position.copy(point).add(normal.clone().multiplyScalar(0.005));
-
-      // Orient the plane to face outward along the normal
-      const lookTarget = point.clone().add(normal);
-      decalMesh.lookAt(lookTarget);
-
-      // Apply user rotation around the normal axis
-      decalMesh.rotateZ(rotAngle);
-
       decalMesh.renderOrder = 10;
       scene.add(decalMesh);
     }
