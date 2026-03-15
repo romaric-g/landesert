@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>4L Trophy — Team</title>
+  <meta name="description" content="Suivez notre aventure au 4L Trophy ! Découvrez notre équipe, nos sponsors et nos photos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loader">
+    <div class="loader-content">
+      <div class="loader-spinner"></div>
+      <p>Chargement du modèle 3D...</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header id="header">
+    <div class="header-inner">
+      <a href="#hero" class="logo">4L TROPHY</a>
+      <nav class="social-nav" aria-label="Réseaux sociaux">
+        <!-- Instagram -->
+        <a href="#" class="social-link" data-platform="instagram" aria-label="Instagram" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <circle cx="12" cy="12" r="5"/>
+            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+        </a>
+        <!-- TikTok -->
+        <a href="#" class="social-link" data-platform="tiktok" aria-label="TikTok" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.48a8.18 8.18 0 004.76 1.52v-3.4a4.85 4.85 0 01-1-.11z"/>
+          </svg>
+        </a>
+        <!-- Facebook -->
+        <a href="#" class="social-link" data-platform="facebook" aria-label="Facebook" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+          </svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section - 3D Viewer -->
+  <section id="hero">
+    <canvas id="car-viewer"></canvas>
+    <div class="hero-overlay">
+      <h1 class="hero-title"></h1>
+      <p class="hero-tagline"></p>
+    </div>
+    <div class="scroll-indicator">
+      <span>Découvrir</span>
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Sponsor Popup -->
+  <div id="sponsor-popup" class="popup hidden">
+    <button class="popup-close" aria-label="Fermer">&times;</button>
+    <div class="popup-logo"></div>
+    <h3 class="popup-name"></h3>
+    <p class="popup-description"></p>
+    <a class="popup-link" href="#" target="_blank" rel="noopener">Visiter le site →</a>
+  </div>
+
+  <!-- Sponsors Fallback Grid -->
+  <section id="sponsors">
+    <h2 class="section-title">Nos Sponsors</h2>
+    <div class="sponsors-grid"></div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery">
+    <h2 class="section-title">Galerie Photos</h2>
+    <div class="gallery-grid"></div>
+  </section>
+
+  <!-- About -->
+  <section id="about">
+    <h2 class="section-title">Notre Aventure</h2>
+    <div class="about-content">
+      <p class="about-text"></p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="footer">
+    <div class="footer-inner">
+      <div class="footer-social"></div>
+      <p class="footer-copy">&copy; 2027 Team 4L Trophy. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox hidden">
+    <button class="lightbox-close" aria-label="Fermer">&times;</button>
+    <button class="lightbox-prev" aria-label="Précédent">&#10094;</button>
+    <button class="lightbox-next" aria-label="Suivant">&#10095;</button>
+    <img class="lightbox-img" src="" alt="">
+  </div>
+
+  <!-- Scripts -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/gallery.js"></script>
+</body>
+</html>
