@@ -322,10 +322,10 @@
       createPolygonMesh, showToast, animateCameraToZone
     } from "./assets/js/common.js";
 
-    // ---- Localhost guard ----
+    // ---- Dev mode guard ----
     if (!isLocalhost()) {
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#6B4226;"><h1>Accès réservé en local uniquement</h1></div>';
-      throw new Error("edit-zones.html is only accessible on localhost");
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#6B4226;"><h1>Accès réservé au mode développeur</h1></div>';
+      throw new Error("edit-zones.html requires dev mode");
     }
 
     // ---- Scene setup ----

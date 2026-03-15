@@ -2,10 +2,44 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-// ---- Localhost check ----
+// ---- Dev mode ----
+const DEV_STORAGE_KEY = "4ltrophy_dev_mode";
+
+export function isDevMode() {
+  return localStorage.getItem(DEV_STORAGE_KEY) === "1";
+}
+
+// Legacy alias
 export function isLocalhost() {
-  const h = location.hostname;
-  return h === "localhost" || h === "127.0.0.1" || h === "::1";
+  return isDevMode();
+}
+
+// Toggle dev mode from console: toggle_dev()
+window.toggle_dev = function() {
+  if (isDevMode()) {
+    localStorage.removeItem(DEV_STORAGE_KEY);
+    console.log("%cMode développeur désactivé", "color:red;font-weight:bold");
+  } else {
+    localStorage.setItem(DEV_STORAGE_KEY, "1");
+    console.log("%cMode développeur activé", "color:green;font-weight:bold");
+  }
+  location.reload();
+};
+
+// Show dev banner if active
+if (isDevMode()) {
+  document.addEventListener("DOMContentLoaded", () => {
+    const banner = document.createElement("div");
+    banner.textContent = "Mode développeur";
+    Object.assign(banner.style, {
+      position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999",
+      background: "#e85d3a", color: "white", textAlign: "center",
+      padding: "4px 0", fontSize: "12px", fontFamily: "sans-serif",
+      fontWeight: "600", letterSpacing: "1px", pointerEvents: "none",
+    });
+    document.body.appendChild(banner);
+    document.body.style.paddingTop = "24px";
+  });
 }
 
 // ---- Constants ----
