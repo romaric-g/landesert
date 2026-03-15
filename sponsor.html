@@ -221,6 +221,10 @@
       display: block;
     }
 
+    .btn-floating-simulate {
+      display: none;
+    }
+
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -238,9 +242,35 @@
     .toast.show { transform: translateX(-50%) translateY(0); }
 
     @media (max-width: 768px) {
-      .main { flex-direction: column; }
-      .viewer-panel { min-height: 50vh; }
-      .side-panel { width: 100%; max-height: 50vh; }
+      .main { flex-direction: column; overflow-y: auto; }
+      .viewer-panel { min-height: 35vh; flex: 0 0 auto; }
+      .side-panel { width: 100%; max-height: none; flex: 1; min-height: 120px; overflow-y: auto; padding-bottom: 80px; }
+      .side-panel h2 { position: static; padding: 0.6rem 1rem; }
+      .side-intro { position: static; padding: 0.6rem 1rem; }
+      .zones-list { flex: 1; overflow-y: visible; }
+      .btn-floating-simulate {
+        display: none;
+        position: fixed;
+        bottom: 1.5rem;
+        left: 1rem;
+        right: 1rem;
+        padding: 0.8rem 1.5rem;
+        background: var(--color-brown);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-family: var(--font-heading);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 100;
+        text-align: center;
+      }
+      .btn-floating-simulate.active { display: block; }
+      .btn-simulate { display: none !important; }
+      .contact-bar { display: none !important; }
     }
   </style>
 </head>
@@ -274,6 +304,8 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <a class="btn-floating-simulate" id="btn-floating-simulate" href="#">Simuler mon logo</a>
 
   <script type="importmap">
   {
@@ -603,14 +635,39 @@
 
     // ---- Simulate button ----
     const btnSimulate = document.getElementById("btn-simulate");
+    const btnFloatingSimulate = document.getElementById("btn-floating-simulate");
 
     function updateSimulateButton() {
       const show = selectedZoneIndex >= 0;
       btnSimulate.classList.toggle("active", show);
+      btnFloatingSimulate.classList.toggle("active", show);
       if (show) {
-        btnSimulate.href = `simulate.html?zone=${selectedZoneIndex}`;
+        const url = `simulate.html?zone=${selectedZoneIndex}`;
+        btnSimulate.href = url;
+        btnFloatingSimulate.href = url;
       }
     }
+
+    // ---- Scroll handling for floating button on mobile ----
+    function handleScroll() {
+      if (!btnFloatingSimulate.classList.contains("active")) return;
+      const scrollBottom = window.innerHeight + window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const threshold = 250;
+      if (docHeight - scrollBottom < threshold) {
+        const contactBar = document.querySelector(".contact-bar");
+        if (contactBar) {
+          const contactRect = contactBar.getBoundingClientRect();
+          btnFloatingSimulate.style.top = (contactRect.top - 60) + "px";
+          btnFloatingSimulate.style.bottom = "auto";
+        }
+      } else {
+        btnFloatingSimulate.style.bottom = "1.5rem";
+        btnFloatingSimulate.style.top = "auto";
+      }
+    }
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleScroll);
 
     // ---- Click on 3D zone ----
     let mouseDownPos = null;
