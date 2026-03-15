@@ -275,6 +275,7 @@
         <div class="zone-info-name" id="zone-name">—</div>
         <span class="zone-info-tag" id="zone-tag">—</span>
         <p class="zone-info-hint">Zone indicative. Vous pouvez placer votre logo librement sur la voiture.</p>
+        <a href="sponsor.html" style="display:inline-block;margin-top:0.4rem;font-size:0.8rem;color:var(--color-blue);text-decoration:none;">Changer de zone &rarr;</a>
       </div>
 
       <div class="upload-section">
@@ -328,7 +329,7 @@
   <script type="module">
     import * as THREE from "three";
     import {
-      createScene, loadCarModel, showToast, zoneHash
+      createScene, loadCarModel, showToast, zoneHash, animateCameraToZone
     } from "./assets/js/common.js";
 
     // ---- Parse zone param ----
@@ -384,6 +385,9 @@
       // Show zone preview: project center onto car surface
       scene.updateMatrixWorld(true);
       showZonePreview(zone);
+
+      // Position camera facing the zone
+      animateCameraToZone(zone, camera, controls);
 
       setTimeout(() => {
         document.getElementById("viewer-hint").style.opacity = "0";
@@ -599,11 +603,15 @@
 
     sizeSlider.addEventListener("input", () => {
       sizeVal.textContent = sizeSlider.value + "%";
+    });
+    sizeSlider.addEventListener("change", () => {
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 
     rotSlider.addEventListener("input", () => {
       rotVal.textContent = rotSlider.value + "°";
+    });
+    rotSlider.addEventListener("change", () => {
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 

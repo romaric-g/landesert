@@ -25,7 +25,7 @@ export function createScene(canvasId) {
   scene.background = new THREE.Color(0xf0ebe0);
 
   const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-  camera.position.set(3, 2, 4);
+  camera.position.set(-3, 2, 4);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
@@ -172,7 +172,22 @@ export function animateCameraToZone(zone, camera, controls) {
 
   const startPos = camera.position.clone();
   const startTarget = controls.target.clone();
-  const camDir = camera.position.clone().sub(controls.target).normalize();
+
+  let camDir;
+  if (zone.projection) {
+    const proj = new THREE.Vector3(...zone.projection);
+    if (Math.abs(proj.y) > 0.9) {
+      // Capot (top-down): view from front-left at an angle
+      camDir = new THREE.Vector3(-0.5, 0.8, 0.5).normalize();
+    } else {
+      // Side zones: face the zone from the opposite direction
+      camDir = proj.clone().negate();
+      camDir.y += 0.4;
+      camDir.normalize();
+    }
+  } else {
+    camDir = camera.position.clone().sub(controls.target).normalize();
+  }
   const newCamPos = center.clone().add(camDir.multiplyScalar(2.5));
 
   const duration = 600, startTime = performance.now();
