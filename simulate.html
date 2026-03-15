@@ -389,6 +389,9 @@
       // Position camera facing the zone
       animateCameraToZone(zone, camera, controls);
 
+      // Restore previous logo & params from localStorage
+      loadFromStorage();
+
       setTimeout(() => {
         document.getElementById("viewer-hint").style.opacity = "0";
       }, 5000);
@@ -548,6 +551,63 @@
     const logoInput = document.getElementById("logo-input");
     const controlsSection = document.getElementById("controls-section");
 
+    // ---- LocalStorage persistence ----
+    const LS_IMG_KEY = "simulate_logo_img";
+    const LS_PARAMS_KEY = "simulate_params_" + zoneIndex;
+
+    function saveToStorage() {
+      localStorage.setItem(LS_PARAMS_KEY, JSON.stringify({
+        size: sizeSlider.value,
+        rotation: rotSlider.value,
+        flip: flipCheckbox.checked,
+      }));
+    }
+
+    function loadFromStorage() {
+      // Restore per-zone params
+      const params = JSON.parse(localStorage.getItem(LS_PARAMS_KEY) || "null");
+      if (params) {
+        sizeSlider.value = params.size;
+        sizeVal.textContent = params.size + "%";
+        rotSlider.value = params.rotation;
+        rotVal.textContent = params.rotation + "°";
+        flipCheckbox.checked = params.flip || false;
+      }
+
+      // Restore shared image
+      const dataURL = localStorage.getItem(LS_IMG_KEY);
+      if (dataURL) {
+        restoreImage(dataURL);
+      }
+    }
+
+    function restoreImage(dataURL) {
+      const img = new Image();
+      img.onload = () => {
+        logoAspect = img.width / img.height;
+
+        uploadArea.innerHTML = "";
+        const preview = document.createElement("img");
+        preview.src = dataURL;
+        uploadArea.appendChild(preview);
+        const hint = document.createElement("p");
+        hint.textContent = "Cliquez pour changer";
+        uploadArea.appendChild(hint);
+        uploadArea.classList.add("has-logo");
+
+        if (logoTexture) logoTexture.dispose();
+        logoTexture = new THREE.Texture(img);
+        logoTexture.needsUpdate = true;
+
+        controlsSection.classList.add("active");
+
+        if (lastHitPoint && lastHitNormal) {
+          placeLogo(lastHitPoint, lastHitNormal);
+        }
+      };
+      img.src = dataURL;
+    }
+
     uploadArea.addEventListener("click", () => logoInput.click());
     uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); });
     uploadArea.addEventListener("drop", (e) => {
@@ -564,33 +624,9 @@
     function handleFile(file) {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        const img = new Image();
-        img.onload = () => {
-          logoAspect = img.width / img.height;
-
-          // Show preview
-          uploadArea.innerHTML = "";
-          const preview = document.createElement("img");
-          preview.src = ev.target.result;
-          uploadArea.appendChild(preview);
-          const hint = document.createElement("p");
-          hint.textContent = "Cliquez pour changer";
-          uploadArea.appendChild(hint);
-          uploadArea.classList.add("has-logo");
-
-          // Create texture
-          if (logoTexture) logoTexture.dispose();
-          logoTexture = new THREE.Texture(img);
-          logoTexture.needsUpdate = true;
-
-          controlsSection.classList.add("active");
-
-          // Place logo at zone center by default
-          if (lastHitPoint && lastHitNormal) {
-            placeLogo(lastHitPoint, lastHitNormal);
-          }
-        };
-        img.src = ev.target.result;
+        const dataURL = ev.target.result;
+        localStorage.setItem(LS_IMG_KEY, dataURL);
+        restoreImage(dataURL);
       };
       reader.readAsDataURL(file);
     }
@@ -605,6 +641,7 @@
       sizeVal.textContent = sizeSlider.value + "%";
     });
     sizeSlider.addEventListener("change", () => {
+      saveToStorage();
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 
@@ -612,11 +649,13 @@
       rotVal.textContent = rotSlider.value + "°";
     });
     rotSlider.addEventListener("change", () => {
+      saveToStorage();
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 
     const flipCheckbox = document.getElementById("flip-checkbox");
     flipCheckbox.addEventListener("change", () => {
+      saveToStorage();
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
     });
 
@@ -627,6 +666,8 @@
       uploadArea.innerHTML = "<p>Cliquez ou glissez une image ici</p>";
       uploadArea.classList.remove("has-logo");
       if (logoTexture) { logoTexture.dispose(); logoTexture = null; }
+      localStorage.removeItem(LS_IMG_KEY);
+      localStorage.removeItem(LS_PARAMS_KEY);
       lastHitPoint = null;
       lastHitNormal = null;
       // Restore zone preview
