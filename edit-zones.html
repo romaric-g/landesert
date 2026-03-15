@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Éditeur de zones — Landesert 4L Trophy (Admin)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --color-cream: #FDF6E3;
+      --color-sand: #E8C96D;
+      --color-blue: #5BAFD6;
+      --color-green: #3A7D44;
+      --color-coral: #E85D3A;
+      --color-brown: #6B4226;
+      --color-bg: #FEFCF6;
+      --color-text: #2D2A24;
+      --color-subtle: #8A8070;
+      --color-card: #FFFFFF;
+      --color-border: rgba(107, 66, 38, 0.12);
+      --font-heading: 'Quicksand', sans-serif;
+      --font-body: 'Inter', sans-serif;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: white;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .header a { text-decoration: none; color: var(--color-brown); }
+    .header .logo { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; }
+    .header .back { font-size: 0.9rem; opacity: 0.7; }
+    .header .back:hover { opacity: 1; }
+
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    .viewer-panel { flex: 1; position: relative; background: #f0ebe0; overflow: hidden; }
+    .viewer-panel canvas { width: 100%; height: 100%; display: block; }
+
+    /* Drawing mode banner */
+    .draw-banner {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-coral);
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .draw-banner.active { display: block; }
+
+    .debug-panel {
+      width: 400px;
+      background: white;
+      border-left: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .debug-panel h2 {
+      font-family: var(--font-heading);
+      font-size: 1.1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-cream);
+    }
+
+    .debug-instructions {
+      padding: 1rem 1.2rem;
+      font-size: 0.85rem;
+      color: var(--color-subtle);
+      border-bottom: 1px solid var(--color-border);
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      padding: 0.8rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .toolbar button {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .toolbar button:hover { transform: translateY(-1px); }
+    .toolbar .btn-new { background: var(--color-coral); color: white; }
+    .toolbar .btn-new:hover { background: #d4431a; }
+    .toolbar .btn-new.drawing { background: var(--color-green); }
+    .toolbar .btn-new.drawing:hover { background: #2e6335; }
+
+    .slots-list { flex: 1; overflow-y: auto; padding: 0.5rem; }
+
+    .slot-card {
+      background: var(--color-cream);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      position: relative;
+      border: 2px solid var(--color-border);
+      transition: border-color 0.2s;
+    }
+    .slot-card.active { border-color: var(--color-coral); }
+
+    .slot-card .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .slot-card .slot-header input {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      color: var(--color-brown);
+    }
+    .slot-card .slot-header .point-count {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      color: var(--color-subtle);
+      margin-left: 0.5rem;
+    }
+
+    .point-row {
+      display: flex;
+      gap: 0.4rem;
+      align-items: center;
+      margin-bottom: 0.3rem;
+      padding: 0.3rem 0;
+      border-bottom: 1px solid rgba(107, 66, 38, 0.06);
+    }
+    .point-row:last-of-type { border-bottom: none; }
+    .point-row .point-label {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.7rem;
+      color: var(--color-coral);
+      width: 20px;
+      text-align: center;
+    }
+    .point-row label {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      color: var(--color-subtle);
+    }
+    .point-row input[type="number"] {
+      width: 62px;
+      padding: 0.15rem 0.3rem;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--color-brown);
+      background: white;
+    }
+    .point-row input[type="number"]:focus {
+      outline: none;
+      border-color: var(--color-coral);
+    }
+    .point-row .btn-del-point {
+      background: none;
+      border: none;
+      color: var(--color-coral);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0 0.3rem;
+      opacity: 0.6;
+    }
+    .point-row .btn-del-point:hover { opacity: 1; }
+
+    .slot-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .slot-actions button {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      font-family: var(--font-body);
+      background: white;
+      color: var(--color-text);
+      transition: background 0.2s;
+    }
+    .slot-actions button:hover { background: var(--color-cream); }
+    .slot-actions .btn-delete { color: var(--color-coral); border-color: var(--color-coral); }
+    .slot-actions .btn-delete:hover { background: #fde8e2; }
+    .slot-actions .btn-copy { color: var(--color-green); border-color: var(--color-green); }
+    .slot-actions .btn-copy:hover { background: #e2f0e5; }
+
+    .export-bar {
+      padding: 1rem 1.2rem;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      gap: 0.5rem;
+    }
+    .export-bar button {
+      flex: 1;
+      padding: 0.6rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .export-bar button:hover { transform: translateY(-1px); }
+    .export-bar .btn-export { background: var(--color-green); color: white; }
+    .export-bar .btn-export:hover { background: #2e6335; }
+    .export-bar .btn-clear { background: var(--color-coral); color: white; }
+    .export-bar .btn-clear:hover { background: #d4431a; }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--color-brown);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: var(--font-heading);
+      transition: transform 0.3s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .viewer-panel { min-height: 50vh; }
+      .debug-panel { width: 100%; max-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="index.html" class="back">&larr; Retour au site</a>
+    <a href="index.html" class="logo">LANDESERT</a>
+  </div>
+
+  <div class="main">
+    <div class="viewer-panel">
+      <canvas id="car-viewer"></canvas>
+      <div class="draw-banner" id="draw-banner">Mode dessin : cliquez sur la voiture pour placer des points, puis "Valider"</div>
+    </div>
+    <div class="debug-panel">
+      <h2>Emplacements Sponsors</h2>
+      <div class="debug-instructions">
+        Cliquez <strong>"Nouvelle zone"</strong> puis cliquez sur la voiture pour placer des points.<br>
+        Cliquez <strong>"Valider"</strong> quand la zone est terminée. Minimum 3 points.
+      </div>
+      <div class="toolbar" id="toolbar">
+        <button class="btn-new" id="btn-draw">Nouvelle zone</button>
+        <button class="btn-new" id="btn-reset-cam" style="background:var(--color-blue)">Recentrer caméra</button>
+      </div>
+      <div class="slots-list" id="slots-list"></div>
+      <div class="export-bar">
+        <button class="btn-export" id="btn-export">Exporter JSON</button>
+        <button class="btn-clear" id="btn-clear">Tout supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+    const modelPath = "assets/models/4l.glb";
+    const carColors = {
+      peinture: "#a8c7c1", peinture1: "#a8c7c1", peinture2: "#a8c7c1", peinture3: "#a8c7c1",
+      caouchou: "#222222", metal_noir: "#1a1a1a", metal_noir1: "#1a1a1a",
+      chrome: "#cccccc", cuir: "#3b2a1a",
+    };
+
+    // ---- Three.js setup ----
+    const canvas = document.getElementById("car-viewer");
+    const container = canvas.parentElement;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0ebe0);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(3, 2, 4);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.4;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 8;
+    controls.maxPolarAngle = Math.PI / 2 + 0.2;
+    controls.target.set(0, 0.5, 0);
+
+    const dirLight = new THREE.DirectionalLight(0xffeedd, 3);
+    dirLight.position.set(5, 8, 3);
+    scene.add(dirLight);
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0xe8c96d, 1.2));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(6, 48),
+      new THREE.MeshStandardMaterial({ color: 0xe0d8c8 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.01;
+    scene.add(ground);
+    scene.add(new THREE.AxesHelper(3));
+
+    // ---- State ----
+    const carMeshes = [];
+    const zones = [];  // finalized zones
+    let zoneCounter = 0;
+    let selectedZoneIndex = -1;
+
+    const COLOR_NORMAL = 0xff00ff;
+    const COLOR_SELECTED = 0xffaa00;
+
+    // Drawing state
+    let isDrawing = false;
+    let currentPoints = [];     // { x, y, z }
+    let currentMarkers = [];    // THREE.Mesh spheres
+    let currentLine = null;     // THREE.Line
+    let currentFill = null;     // THREE.Mesh (polygon fill)
+
+    // ---- Load model ----
+    new GLTFLoader().load(modelPath, (gltf) => {
+      const model = gltf.scene;
+
+      model.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(model);
+      const sz = box.getSize(new THREE.Vector3());
+      const scale = 2.5 / Math.max(sz.x, sz.y, sz.z);
+      model.scale.setScalar(scale);
+
+      model.updateMatrixWorld(true);
+      const box2 = new THREE.Box3().setFromObject(model);
+      const center2 = box2.getCenter(new THREE.Vector3());
+      model.position.x -= center2.x;
+      model.position.z -= center2.z;
+      model.position.y -= box2.min.y;
+
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.geometry.computeVertexNormals();
+          const applyColor = (mat) => {
+            if (carColors[mat.name]) mat.color.set(carColors[mat.name]);
+            mat.side = THREE.DoubleSide;
+          };
+          if (Array.isArray(child.material)) child.material.forEach(applyColor);
+          else applyColor(child.material);
+          carMeshes.push(child);
+        }
+      });
+      scene.add(model);
+
+      // Reset camera to match main page
+      controls.target.set(0, 0.5, 0);
+      camera.position.set(3, 2, 4);
+      controls.update();
+
+      fetch("assets/zones.json").then(r => r.json()).then(loadDefaultZones);
+    });
+
+    function loadDefaultZones(defaultZones) {
+      defaultZones.forEach(data => {
+        zoneCounter++;
+        const zone = {
+          id: zoneCounter,
+          name: data.name,
+          points: data.points.map(p => ({ ...p })),
+          markers: [],
+          line: null,
+          fill: null,
+        };
+
+        zone.points.forEach(p => {
+          const marker = new THREE.Mesh(markerGeo, markerMatDone);
+          marker.position.set(p.x, p.y, p.z);
+          marker.renderOrder = 3;
+          scene.add(marker);
+          zone.markers.push(marker);
+        });
+
+        const pts = zone.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+        pts.push(pts[0]);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+        zone.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+        zone.line.renderOrder = 2;
+        scene.add(zone.line);
+
+        zone.fill = createPolygonMesh(zone.points, fillMatDone);
+        if (zone.fill) scene.add(zone.fill);
+
+        zones.push(zone);
+      });
+      renderUI();
+    }
+
+    // ---- Resize ----
+    new ResizeObserver(() => {
+      const w = container.clientWidth, h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }).observe(container);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // ---- Drawing helpers ----
+    const markerGeo = new THREE.SphereGeometry(0.025, 10, 10);
+    const markerMatActive = new THREE.MeshBasicMaterial({ color: 0xff3333 });
+    const markerMatDone = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xff3333, linewidth: 2 });
+    const fillMat = new THREE.MeshBasicMaterial({
+      color: 0xe85d3a,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    const fillMatDone = new THREE.MeshBasicMaterial({
+      color: 0xe85d3a,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+
+    function updateCurrentVisuals() {
+      // Update line
+      if (currentLine) scene.remove(currentLine);
+      if (currentPoints.length >= 2) {
+        const pts = currentPoints.map(p => new THREE.Vector3(p.x, p.y, p.z));
+        if (currentPoints.length >= 3) pts.push(pts[0]); // close loop
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        currentLine = new THREE.Line(geo, lineMat);
+        currentLine.renderOrder = 2;
+        scene.add(currentLine);
+      }
+
+      // Update fill
+      if (currentFill) scene.remove(currentFill);
+      if (currentPoints.length >= 3) {
+        currentFill = createPolygonMesh(currentPoints, fillMat);
+        if (currentFill) scene.add(currentFill);
+      }
+    }
+
+    function createPolygonMesh(points, material) {
+      if (points.length < 3) return null;
+
+      const vecs = points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+
+      // Compute normal from first 3 points
+      const edge1 = new THREE.Vector3().subVectors(vecs[1], vecs[0]);
+      const edge2 = new THREE.Vector3().subVectors(vecs[2], vecs[0]);
+      const normal = new THREE.Vector3().crossVectors(edge1, edge2).normalize();
+
+      // Fan triangulation from first vertex
+      const vertices = [];
+      for (let i = 1; i < vecs.length - 1; i++) {
+        vertices.push(vecs[0].x, vecs[0].y, vecs[0].z);
+        vertices.push(vecs[i].x, vecs[i].y, vecs[i].z);
+        vertices.push(vecs[i + 1].x, vecs[i + 1].y, vecs[i + 1].z);
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+      geo.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geo, material.clone());
+      mesh.renderOrder = 1;
+      return mesh;
+    }
+
+    function clearCurrentDrawing() {
+      currentMarkers.forEach(m => scene.remove(m));
+      currentMarkers = [];
+      if (currentLine) { scene.remove(currentLine); currentLine = null; }
+      if (currentFill) { scene.remove(currentFill); currentFill = null; }
+      currentPoints = [];
+    }
+
+    // ---- Click to add point (during drawing) ----
+    let mouseDownPos = null;
+    renderer.domElement.addEventListener("mousedown", (e) => {
+      mouseDownPos = { x: e.clientX, y: e.clientY };
+    });
+
+    renderer.domElement.addEventListener("mouseup", (e) => {
+      if (!isDrawing) return;
+      // Ignore drags
+      const dx = e.clientX - mouseDownPos.x;
+      const dy = e.clientY - mouseDownPos.y;
+      if (Math.sqrt(dx * dx + dy * dy) > 5) return;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
+      );
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(mouse, camera);
+      const intersects = ray.intersectObjects(carMeshes, true);
+      if (intersects.length === 0) return;
+
+      const hit = intersects[0];
+      const p = { x: +hit.point.x.toFixed(4), y: +hit.point.y.toFixed(4), z: +hit.point.z.toFixed(4) };
+      currentPoints.push(p);
+
+      // Add marker sphere
+      const marker = new THREE.Mesh(markerGeo, markerMatActive);
+      marker.position.set(p.x, p.y, p.z);
+      marker.renderOrder = 3;
+      scene.add(marker);
+      currentMarkers.push(marker);
+
+      updateCurrentVisuals();
+      renderUI();
+      showToast(`Point ${currentPoints.length} placé`);
+    });
+
+    // ---- Finalize zone ----
+    function finalizeZone() {
+      if (currentPoints.length < 3) {
+        showToast("Minimum 3 points pour valider");
+        return;
+      }
+
+      zoneCounter++;
+      const zone = {
+        id: zoneCounter,
+        name: `Zone ${zoneCounter}`,
+        points: currentPoints.map(p => ({ ...p })),
+        markers: [],
+        line: null,
+        fill: null,
+      };
+
+      // Replace active markers with done markers
+      currentMarkers.forEach(m => scene.remove(m));
+      zone.points.forEach(p => {
+        const marker = new THREE.Mesh(markerGeo, markerMatDone);
+        marker.position.set(p.x, p.y, p.z);
+        marker.renderOrder = 3;
+        scene.add(marker);
+        zone.markers.push(marker);
+      });
+
+      // Create finalized visuals
+      if (currentLine) scene.remove(currentLine);
+      if (currentFill) scene.remove(currentFill);
+
+      const pts = zone.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+      pts.push(pts[0]);
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      zone.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+      zone.line.renderOrder = 2;
+      scene.add(zone.line);
+
+      zone.fill = createPolygonMesh(zone.points, fillMatDone);
+      if (zone.fill) scene.add(zone.fill);
+
+      zones.push(zone);
+
+      // Reset drawing
+      currentPoints = [];
+      currentMarkers = [];
+      currentLine = null;
+      currentFill = null;
+      isDrawing = false;
+      updateDrawButton();
+      renderUI();
+      showToast(`Zone ${zoneCounter} validée (${zone.points.length} points)`);
+    }
+
+    function updateZoneVisuals(zone) {
+      // Update markers
+      zone.markers.forEach((m, i) => {
+        m.position.set(zone.points[i].x, zone.points[i].y, zone.points[i].z);
+      });
+
+      // Update line
+      if (zone.line) scene.remove(zone.line);
+      const pts = zone.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+      pts.push(pts[0]);
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
+      zone.line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0xff00ff }));
+      zone.line.renderOrder = 2;
+      scene.add(zone.line);
+
+      // Update fill
+      if (zone.fill) scene.remove(zone.fill);
+      zone.fill = createPolygonMesh(zone.points, fillMatDone);
+      if (zone.fill) scene.add(zone.fill);
+    }
+
+    function removeZone(zone) {
+      zone.markers.forEach(m => scene.remove(m));
+      if (zone.line) scene.remove(zone.line);
+      if (zone.fill) scene.remove(zone.fill);
+    }
+
+    // ---- Zone selection colors ----
+    function selectZoneInEditor(index) {
+      selectedZoneIndex = index;
+      updateZoneColors();
+      renderUI();
+    }
+
+    function updateZoneColors() {
+      zones.forEach((zone, i) => {
+        const isSelected = i === selectedZoneIndex;
+        const color = isSelected ? COLOR_SELECTED : COLOR_NORMAL;
+
+        zone.markers.forEach(m => {
+          m.material = new THREE.MeshBasicMaterial({ color });
+        });
+
+        if (zone.line) {
+          zone.line.material = new THREE.LineBasicMaterial({ color });
+        }
+
+        if (zone.fill) {
+          zone.fill.material = new THREE.MeshBasicMaterial({
+            color: isSelected ? COLOR_SELECTED : 0xe85d3a,
+            transparent: true,
+            opacity: isSelected ? 0.45 : 0.25,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+        }
+      });
+    }
+
+    // ---- Draw button ----
+    const btnDraw = document.getElementById("btn-draw");
+    const drawBanner = document.getElementById("draw-banner");
+
+    function updateDrawButton() {
+      if (isDrawing) {
+        btnDraw.textContent = `Valider (${currentPoints.length} pts)`;
+        btnDraw.classList.add("drawing");
+        drawBanner.classList.add("active");
+      } else {
+        btnDraw.textContent = "Nouvelle zone";
+        btnDraw.classList.remove("drawing");
+        drawBanner.classList.remove("active");
+      }
+    }
+
+    btnDraw.addEventListener("click", () => {
+      if (isDrawing) {
+        finalizeZone();
+      } else {
+        isDrawing = true;
+        clearCurrentDrawing();
+        updateDrawButton();
+        renderUI();
+        showToast("Cliquez sur la voiture pour placer des points");
+      }
+    });
+
+    // Reset camera
+    document.getElementById("btn-reset-cam").addEventListener("click", () => {
+      controls.enableDamping = false;
+      camera.position.set(3, 2, 4);
+      controls.target.set(0, 0.5, 0);
+      controls.update();
+      controls.enableDamping = true;
+    });
+
+    // Cancel with Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && isDrawing) {
+        clearCurrentDrawing();
+        isDrawing = false;
+        updateDrawButton();
+        renderUI();
+        showToast("Dessin annulé");
+      }
+    });
+
+    // ---- UI ----
+    const slotsListEl = document.getElementById("slots-list");
+
+    function renderUI() {
+      slotsListEl.innerHTML = "";
+
+      // Show current drawing points if any
+      if (isDrawing && currentPoints.length > 0) {
+        const card = document.createElement("div");
+        card.className = "slot-card active";
+        card.innerHTML = `
+          <div class="slot-header">
+            <span style="font-family:var(--font-heading);font-weight:600;color:var(--color-coral)">En cours de dessin...</span>
+            <span class="point-count">${currentPoints.length} point(s)</span>
+          </div>
+        `;
+        currentPoints.forEach((p, pi) => {
+          card.appendChild(createPointRow(p, pi, (dim, val) => {
+            currentPoints[pi][dim] = val;
+            currentMarkers[pi].position.set(p.x, p.y, p.z);
+            updateCurrentVisuals();
+          }, () => {
+            // Delete point
+            scene.remove(currentMarkers[pi]);
+            currentPoints.splice(pi, 1);
+            currentMarkers.splice(pi, 1);
+            updateCurrentVisuals();
+            updateDrawButton();
+            renderUI();
+          }));
+        });
+        slotsListEl.appendChild(card);
+      }
+
+      // Finalized zones
+      zones.forEach((zone, zi) => {
+        const card = document.createElement("div");
+        card.className = "slot-card" + (zi === selectedZoneIndex ? " active" : "");
+        card.innerHTML = `
+          <div class="slot-header">
+            <input type="text" value="${zone.name}" class="name-input">
+            <span class="point-count">${zone.points.length} pts</span>
+          </div>
+        `;
+
+        card.querySelector(".name-input").addEventListener("change", (e) => {
+          zone.name = e.target.value;
+        });
+
+        zone.points.forEach((p, pi) => {
+          card.appendChild(createPointRow(p, pi, (dim, val) => {
+            zone.points[pi][dim] = val;
+            updateZoneVisuals(zone);
+          }, () => {
+            if (zone.points.length <= 3) {
+              showToast("Minimum 3 points par zone");
+              return;
+            }
+            scene.remove(zone.markers[pi]);
+            zone.points.splice(pi, 1);
+            zone.markers.splice(pi, 1);
+            updateZoneVisuals(zone);
+            renderUI();
+          }));
+        });
+
+        const actions = document.createElement("div");
+        actions.className = "slot-actions";
+        actions.innerHTML = `
+          <button class="btn-copy">Copier JSON</button>
+          <button class="btn-delete">Supprimer</button>
+        `;
+
+        actions.querySelector(".btn-copy").addEventListener("click", () => {
+          const data = { name: zone.name, points: zone.points };
+          navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+          showToast("JSON copié");
+        });
+
+        actions.querySelector(".btn-delete").addEventListener("click", () => {
+          removeZone(zone);
+          zones.splice(zi, 1);
+          renderUI();
+          showToast("Zone supprimée");
+        });
+
+        card.appendChild(actions);
+
+        // Click card to select zone + focus camera
+        card.addEventListener("click", (e) => {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+
+          // Toggle selection
+          selectZoneInEditor(selectedZoneIndex === zi ? -1 : zi);
+
+          // Animate camera to zone center
+          const center = new THREE.Vector3();
+          zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
+          center.divideScalar(zone.points.length);
+
+          const startPos = camera.position.clone();
+          const startTarget = controls.target.clone();
+          const camDir = camera.position.clone().sub(controls.target).normalize();
+          const newCamPos = center.clone().add(camDir.multiplyScalar(2.5));
+
+          const duration = 600, startTime = performance.now();
+          function anim(now) {
+            const t = Math.min((now - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - t, 3);
+            camera.position.lerpVectors(startPos, newCamPos, ease);
+            controls.target.lerpVectors(startTarget, center, ease);
+            controls.update();
+            if (t < 1) requestAnimationFrame(anim);
+          }
+          requestAnimationFrame(anim);
+        });
+
+        slotsListEl.appendChild(card);
+      });
+    }
+
+    function createPointRow(point, index, onChange, onDelete) {
+      const row = document.createElement("div");
+      row.className = "point-row";
+      row.innerHTML = `
+        <span class="point-label">P${index + 1}</span>
+        <label>X</label><input type="number" step="0.001" value="${point.x}" data-dim="x">
+        <label>Y</label><input type="number" step="0.001" value="${point.y}" data-dim="y">
+        <label>Z</label><input type="number" step="0.001" value="${point.z}" data-dim="z">
+        <button class="btn-del-point" title="Supprimer ce point">&times;</button>
+      `;
+
+      row.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener("input", (e) => {
+          const val = parseFloat(e.target.value);
+          if (isNaN(val)) return;
+          point[e.target.dataset.dim] = +val.toFixed(4);
+          onChange(e.target.dataset.dim, +val.toFixed(4));
+        });
+      });
+
+      row.querySelector(".btn-del-point").addEventListener("click", onDelete);
+      return row;
+    }
+
+    // ---- Export ----
+    document.getElementById("btn-export").addEventListener("click", () => {
+      const data = zones.map(z => ({ name: z.name, points: z.points }));
+      const json = JSON.stringify(data, null, 2);
+      navigator.clipboard.writeText(json);
+      showToast("JSON exporté dans le presse-papier !");
+      console.log("Exported zones:", json);
+    });
+
+    // ---- Clear all ----
+    document.getElementById("btn-clear").addEventListener("click", () => {
+      zones.forEach(removeZone);
+      zones.length = 0;
+      zoneCounter = 0;
+      clearCurrentDrawing();
+      isDrawing = false;
+      updateDrawButton();
+      renderUI();
+      showToast("Tout supprimé");
+    });
+
+    // ---- Toast ----
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+  </script>
+</body>
+</html>
