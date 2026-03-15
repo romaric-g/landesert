@@ -4,26 +4,91 @@
 // ============================================
 
 export const siteConfig = {
-  teamName: "Team 4L Trophy",
-  tagline: "Cap sur l'aventure — 4L Trophy 2027",
-  aboutText:
-    "Nous sommes une équipe passionnée prête à relever le défi du 4L Trophy. " +
-    "Un raid solidaire et aventurier à travers le Maroc au volant de notre Renault 4L. " +
-    "Suivez notre aventure et découvrez nos partenaires qui rendent ce projet possible !",
+  teamName: "Landesert",
+  tagline: "Équipage #557 — 30ᵉ édition du 4L Trophy",
+  subtitle: "Du 17 au 28 février 2027 · Biarritz → Maroc",
   devMode: true, // true = affiche axes + coordonnées au clic pour positionner les sponsors
+
+  // Section Équipe
+  team: {
+    intro:
+      "Nous sommes Meyline et Cyprien Gauzi, frère et sœur unis par la passion de l'aventure et la solidarité.",
+    members: [
+      {
+        name: "Meyline Gauzi",
+        role: "Co-pilote",
+        description:
+          "Étudiante en 3ème année de BUT Génie Biologique à l'IUT Paul Sabatier de Toulouse. " +
+          "Passionnée par les défis humains et solidaires.",
+      },
+      {
+        name: "Cyprien Gauzi",
+        role: "Pilote",
+        description:
+          "Étudiant en 2ème année de BTS Maintenance des Véhicules à Dax. " +
+          "Passionné d'automobile et de mécanique, c'est lui qui prépare notre 4L.",
+      },
+    ],
+  },
+
+  // Section 4L Trophy
+  event: {
+    title: "Le 4L Trophy",
+    description:
+      "Le 4L Trophy est le plus grand raid étudiant humanitaire d'Europe. " +
+      "Chaque année, plus de 1 000 équipages s'élancent au volant de leur Renault 4L " +
+      "pour rallier le Maroc depuis Biarritz. Ce n'est pas une course de vitesse, " +
+      "mais un défi d'orientation et de solidarité sur plus de 6 000 km de routes et de pistes.",
+    stats: [
+      { value: "30ᵉ", label: "édition" },
+      { value: "6 000+", label: "km de parcours" },
+      { value: "1 000+", label: "équipages" },
+      { value: "10", label: "jours d'aventure" },
+    ],
+  },
+
+  // Section Humanitaire
+  humanitarian: {
+    title: "Notre Mission Solidaire",
+    association: "Enfants du Désert",
+    description:
+      "Le 4L Trophy est avant tout une aventure solidaire. Chaque équipage transporte " +
+      "des fournitures scolaires et du matériel sportif destinés aux enfants du Maroc. " +
+      "L'association Enfants du Désert œuvre depuis plus de 20 ans pour améliorer les conditions " +
+      "de vie des populations isolées du sud marocain : construction d'écoles, accès à l'eau potable, " +
+      "soutien scolaire et parrainage.",
+    actions: [
+      "Fournitures scolaires pour les écoles rurales",
+      "Matériel sportif pour les enfants",
+      "Soutien à l'association Enfants du Désert",
+    ],
+  },
+
+  // Section Association Landesert
+  association: {
+    title: "L'Association Landesert",
+    description:
+      "Pour porter ce projet, nous avons créé l'association Landesert. " +
+      "Elle nous permet de collecter des fonds, de gérer nos partenariats " +
+      "et d'organiser nos actions solidaires. Notre objectif : réunir le budget nécessaire " +
+      "pour participer au 4L Trophy tout en maximisant notre impact humanitaire.",
+  },
+
+  contact: {
+    email: "landesert.4ltrophy@gmail.com",
+  },
 };
 
 // Couleurs du modèle 3D (matériaux séparés dans le GLB)
 // Mapping des pièces du modèle 3D :
 // carrosserie = métal, phares, porte droite (model_1)
-// wheels = carrosserie principale (model_0)
-// interior = contours fenêtres, plaque, châssis (model_2)
-// vitres = petits détails (model_3)
 export const carColors = {
-  carrosserie: "#a8c7c1", // Métal/phares/porte droite — vert d'eau
-  wheels: "#a8c7c1",       // Carrosserie principale — même couleur
-  interior: "#333333",     // Contours fenêtres, plaque, châssis — gris foncé
-  vitres: "#a8c7c1",       // Détails — même couleur carrosserie
+  // pas de couleur sur la carrosserie (peinture) — on garde le matériau d'origine
+  caouchou: "#222222",
+  metal_noir: "#1a1a1a",
+  metal_noir1: "#1a1a1a",
+  chrome: "#cccccc",
+  cuir: "#3b2a1a",
 };
 
 export const modelPath = "assets/models/4l.glb";
@@ -78,17 +143,17 @@ export const sponsors = [
 export const socialLinks = [
   {
     platform: "instagram",
-    url: "#",
+    url: "https://www.instagram.com/Landesert_4ltrophy/",
     label: "Instagram",
   },
   {
     platform: "tiktok",
-    url: "#",
+    url: "https://www.tiktok.com/@landesert",
     label: "TikTok",
   },
   {
     platform: "facebook",
-    url: "#",
+    url: "https://www.facebook.com/profile.php?id=61575071498498",
     label: "Facebook",
   },
 ];

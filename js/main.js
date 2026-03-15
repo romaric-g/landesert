@@ -6,6 +6,7 @@ import { siteConfig, modelPath, sponsors, socialLinks, carColors } from "./confi
 
 // ---- DOM refs ----
 const canvas = document.getElementById("car-viewer");
+const viewerContainer = canvas.parentElement;
 const loaderEl = document.getElementById("loader");
 const popup = document.getElementById("sponsor-popup");
 const heroTitle = document.querySelector(".hero-title");
@@ -14,7 +15,8 @@ const heroTagline = document.querySelector(".hero-tagline");
 // ---- Populate site content from config ----
 heroTitle.textContent = siteConfig.teamName;
 heroTagline.textContent = siteConfig.tagline;
-document.querySelector(".about-text").textContent = siteConfig.aboutText;
+const heroSubtitle = document.querySelector(".hero-subtitle");
+if (heroSubtitle) heroSubtitle.textContent = siteConfig.subtitle || "";
 
 // Set social links from config
 document.querySelectorAll(".social-link").forEach((link) => {
@@ -30,70 +32,164 @@ document.querySelectorAll(".social-link").forEach((link) => {
   footerSocial.appendChild(clone);
 });
 
-// Build sponsors fallback grid
-const sponsorsGrid = document.querySelector(".sponsors-grid");
-sponsors.forEach((sp) => {
-  const card = document.createElement("a");
-  card.href = sp.url;
-  card.target = "_blank";
-  card.rel = "noopener";
+// ---- Team Section ----
+const teamIntro = document.querySelector(".team-intro");
+const teamGrid = document.querySelector(".team-grid");
+if (siteConfig.team && teamGrid) {
+  if (teamIntro) teamIntro.textContent = siteConfig.team.intro;
+  siteConfig.team.members.forEach((member) => {
+    const card = document.createElement("div");
+    card.className = "team-card fade-in";
+    card.innerHTML = `
+      <div class="team-card-avatar">${member.name.charAt(0)}</div>
+      <h3 class="team-card-name">${member.name}</h3>
+      <span class="team-card-role">${member.role}</span>
+      <p class="team-card-desc">${member.description}</p>
+    `;
+    teamGrid.appendChild(card);
+  });
+}
+
+// ---- Event Section ----
+const eventTitle = document.querySelector(".event-title");
+const eventDesc = document.querySelector(".event-description");
+const statsContainer = document.querySelector(".event-stats");
+if (siteConfig.event) {
+  if (eventTitle) eventTitle.textContent = siteConfig.event.title;
+  if (eventDesc) eventDesc.textContent = siteConfig.event.description;
+  if (statsContainer) {
+    siteConfig.event.stats.forEach((stat) => {
+      const el = document.createElement("div");
+      el.className = "stat-item";
+      el.innerHTML = `<span class="stat-value">${stat.value}</span><span class="stat-label">${stat.label}</span>`;
+      statsContainer.appendChild(el);
+    });
+  }
+}
+
+// ---- Humanitarian Section ----
+const humanTitle = document.querySelector(".humanitarian-title");
+const humanDesc = document.querySelector(".humanitarian-description");
+const actionsList = document.querySelector(".humanitarian-actions");
+if (siteConfig.humanitarian) {
+  if (humanTitle) humanTitle.textContent = siteConfig.humanitarian.title;
+  if (humanDesc) humanDesc.textContent = siteConfig.humanitarian.description;
+  if (actionsList) {
+    siteConfig.humanitarian.actions.forEach((action) => {
+      const li = document.createElement("li");
+      li.textContent = action;
+      actionsList.appendChild(li);
+    });
+  }
+}
+
+// ---- Association Section ----
+const assocTitle = document.querySelector(".association-title");
+const assocDesc = document.querySelector(".association-description");
+if (siteConfig.association) {
+  if (assocTitle) assocTitle.textContent = siteConfig.association.title;
+  if (assocDesc) assocDesc.textContent = siteConfig.association.description;
+}
+const emailBtn = document.querySelector(".contact-email");
+if (siteConfig.contact && emailBtn) {
+  emailBtn.href = `mailto:${siteConfig.contact.email}`;
+  emailBtn.textContent = siteConfig.contact.email;
+}
+
+// ---- Build sponsors list (left panel) ----
+const sponsorsList = document.querySelector(".sponsors-list");
+const sponsorCardEls = [];
+sponsors.forEach((sp, index) => {
+  const card = document.createElement("div");
   card.className = "sponsor-card fade-in";
+  card.dataset.sponsorIndex = index;
 
   const logoDiv = document.createElement("div");
   logoDiv.className = "sponsor-card-logo";
   logoDiv.style.background = sp.color;
-  logoDiv.textContent = sp.name.charAt(0);
   if (sp.logo) {
-    logoDiv.innerHTML = `<img src="${sp.logo}" alt="${sp.name}" style="max-width:100%;max-height:100%;border-radius:50%">`;
+    logoDiv.innerHTML = `<img src="${sp.logo}" alt="${sp.name}">`;
+  } else {
+    logoDiv.textContent = sp.name.charAt(0);
   }
 
-  const nameEl = document.createElement("div");
-  nameEl.className = "sponsor-card-name";
-  nameEl.textContent = sp.name;
+  const info = document.createElement("div");
+  info.className = "sponsor-card-info";
+  info.innerHTML = `
+    <div class="sponsor-card-name">${sp.name}</div>
+    <div class="sponsor-card-desc">${sp.description}</div>
+  `;
 
   card.appendChild(logoDiv);
-  card.appendChild(nameEl);
-  sponsorsGrid.appendChild(card);
+  card.appendChild(info);
+  sponsorsList.appendChild(card);
+  sponsorCardEls.push(card);
+
+  // Click -> focus camera on this sponsor's decal
+  card.addEventListener("click", () => {
+    focusOnSponsor(sp, index);
+  });
 });
 
-// ---- Three.js Setup ----
-const scene = new THREE.Scene();
+// ---- Mobile menu toggle ----
+const menuToggle = document.querySelector(".menu-toggle");
+const headerNav = document.querySelector(".header-nav");
+if (menuToggle && headerNav) {
+  menuToggle.addEventListener("click", () => {
+    headerNav.classList.toggle("open");
+    menuToggle.classList.toggle("open");
+  });
+  headerNav.querySelectorAll("a").forEach((a) => {
+    a.addEventListener("click", () => {
+      headerNav.classList.remove("open");
+      menuToggle.classList.remove("open");
+    });
+  });
+}
 
-const camera = new THREE.PerspectiveCamera(
-  45,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  100
-);
-camera.position.set(3, 2, 5);
+// ---- Three.js Setup ----
+// Size from container, not window
+function getViewerSize() {
+  return {
+    width: viewerContainer.clientWidth,
+    height: viewerContainer.clientHeight,
+  };
+}
+
+const { width: initW, height: initH } = getViewerSize();
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0ebe0);
+
+const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 100);
+camera.position.set(3, 2, 4);
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
   antialias: true,
-  alpha: true,
 });
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(initW, initH);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.4;
 
 // ---- Lighting ----
 const dirLight = new THREE.DirectionalLight(0xffeedd, 3);
 dirLight.position.set(5, 8, 3);
 scene.add(dirLight);
 
-const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0xc2956b, 1.2);
+const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0xe8c96d, 1.2);
 scene.add(hemiLight);
 
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
 // ---- Ground ----
-const groundGeo = new THREE.CircleGeometry(8, 64);
+const groundGeo = new THREE.CircleGeometry(6, 64);
 const groundMat = new THREE.MeshStandardMaterial({
-  color: 0x1a1a2e,
-  roughness: 0.8,
-  metalness: 0.1,
+  color: 0xe0d8c8,
+  roughness: 0.9,
+  metalness: 0.0,
 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
@@ -104,8 +200,8 @@ scene.add(ground);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 2;
-controls.maxDistance = 10;
+controls.minDistance = 1.5;
+controls.maxDistance = 8;
 controls.maxPolarAngle = Math.PI / 2 + 0.2;
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.5;
@@ -124,7 +220,7 @@ controls.addEventListener("end", () => {
 
 // ---- Car meshes (for raycasting decals) ----
 const carMeshes = [];
-const decalMeshes = []; // clickable decal meshes for sponsor interaction
+const decalMeshes = [];
 
 // ---- Decal creation ----
 const textureLoader = new THREE.TextureLoader();
@@ -138,9 +234,7 @@ function createSponsorDecals() {
     const orientation = new THREE.Euler(d.orientation.x, d.orientation.y, d.orientation.z);
     const size = new THREE.Vector3(d.size.width, d.size.height, d.size.depth);
 
-    // Load logo texture
     const texture = textureLoader.load(sp.logo, () => {
-      // Try to create decal on each car mesh
       for (const mesh of carMeshes) {
         try {
           const decalGeo = new DecalGeometry(mesh, position, orientation, size);
@@ -170,23 +264,82 @@ function createSponsorDecals() {
   });
 }
 
+// ---- Camera animation to focus on a sponsor's decal ----
+let cameraAnimating = false;
+
+function focusOnSponsor(sp, index) {
+  // Highlight active card
+  sponsorCardEls.forEach((el) => el.classList.remove("active"));
+  sponsorCardEls[index].classList.add("active");
+
+  if (!sp.decal) return;
+
+  const d = sp.decal;
+  const targetPos = new THREE.Vector3(d.position.x, d.position.y, d.position.z);
+
+  // Compute camera position: offset from decal position along the viewing direction
+  let cameraOffset;
+  if (Math.abs(d.orientation.y) > 0.1) {
+    // Side decal — view from the side
+    const side = d.orientation.y > 0 ? 1 : -1;
+    cameraOffset = new THREE.Vector3(side * 2.5, 0.8, 0.5);
+  } else {
+    // Top decal — view from above-front
+    cameraOffset = new THREE.Vector3(0.5, 2.5, 2);
+  }
+
+  const newCamPos = targetPos.clone().add(cameraOffset);
+
+  // Animate camera
+  controls.autoRotate = false;
+  clearTimeout(autoRotateTimeout);
+  cameraAnimating = true;
+
+  const startPos = camera.position.clone();
+  const startTarget = controls.target.clone();
+  const endTarget = targetPos.clone();
+  const duration = 800;
+  const startTime = performance.now();
+
+  function animateCamera(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - t, 3);
+
+    camera.position.lerpVectors(startPos, newCamPos, ease);
+    controls.target.lerpVectors(startTarget, endTarget, ease);
+    controls.update();
+
+    if (t < 1) {
+      requestAnimationFrame(animateCamera);
+    } else {
+      cameraAnimating = false;
+      autoRotateTimeout = setTimeout(() => {
+        controls.autoRotate = true;
+      }, 5000);
+    }
+  }
+
+  requestAnimationFrame(animateCamera);
+}
+
 // ---- Placeholder car ----
 function createPlaceholderCar() {
   const carGroup = new THREE.Group();
   const bodyGeo = new THREE.BoxGeometry(2, 0.6, 0.9);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc2956b, roughness: 0.5 });
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xa8c7c1, roughness: 0.5 });
   const body = new THREE.Mesh(bodyGeo, bodyMat);
   body.position.y = 0.45;
   carGroup.add(body);
 
   const cabinGeo = new THREE.BoxGeometry(0.9, 0.45, 0.8);
-  const cabinMat = new THREE.MeshStandardMaterial({ color: 0xa07850, roughness: 0.4 });
+  const cabinMat = new THREE.MeshStandardMaterial({ color: 0x8aaca6, roughness: 0.4 });
   const cabin = new THREE.Mesh(cabinGeo, cabinMat);
   cabin.position.set(-0.15, 0.95, 0);
   carGroup.add(cabin);
 
   const wheelGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.12, 16);
-  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
   [[0.65, 0.18, 0.5], [0.65, 0.18, -0.5], [-0.65, 0.18, 0.5], [-0.65, 0.18, -0.5]].forEach(([x, y, z]) => {
     const wheel = new THREE.Mesh(wheelGeo, wheelMat);
     wheel.rotation.x = Math.PI / 2;
@@ -208,10 +361,6 @@ gltfLoader.load(
   (gltf) => {
     const model = gltf.scene;
 
-    // Fix orientation: model has Z-up, Three.js uses Y-up
-    model.rotation.x = -Math.PI / 2;
-
-    // Center and scale
     model.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
@@ -226,13 +375,18 @@ gltfLoader.load(
     model.position.z -= center2.z;
     model.position.y -= box2.min.y;
 
-    // Apply colors and collect meshes
     model.traverse((child) => {
       if (child.isMesh) {
         child.geometry.computeVertexNormals();
         const applyColor = (mat) => {
+          // Appliquer les couleurs définies dans config
           if (carColors[mat.name]) {
             mat.color.set(carColors[mat.name]);
+          }
+          // Tout le reste → blanc neutre (retirer textures et couleurs)
+          if (mat.name && !carColors[mat.name]) {
+            mat.color.set("#ffffff");
+            mat.map = null;
           }
           mat.side = THREE.DoubleSide;
         };
@@ -247,7 +401,6 @@ gltfLoader.load(
 
     scene.add(model);
 
-    // Update world matrices before creating decals
     model.updateMatrixWorld(true);
     createSponsorDecals();
     hideLoader();
@@ -275,12 +428,11 @@ function hideLoader() {
   loaderEl.classList.add("hidden");
 }
 
-// ---- Dev Mode: click on car to get position + normal ----
+// ---- Dev Mode ----
 function addDevHelpers() {
   const axes = new THREE.AxesHelper(3);
   scene.add(axes);
 
-  // Visual marker for clicked points
   const markerGeo = new THREE.SphereGeometry(0.02, 8, 8);
   const markerMat = new THREE.MeshBasicMaterial({ color: 0xff00ff });
 
@@ -299,22 +451,19 @@ function addDevHelpers() {
       const p = hit.point;
       const n = hit.face.normal.clone();
 
-      // Transform normal to world space
       const normalMatrix = new THREE.Matrix3().getNormalMatrix(hit.object.matrixWorld);
       n.applyMatrix3(normalMatrix).normalize();
 
-      // Place a marker
       const marker = new THREE.Mesh(markerGeo, markerMat);
       marker.position.copy(p);
       scene.add(marker);
 
-      // Draw normal arrow
       const arrow = new THREE.ArrowHelper(n, p, 0.2, 0xff00ff);
       scene.add(arrow);
 
       console.log(
         `%c DECAL POSITION `,
-        "background: #E94D1A; color: white; font-weight: bold;",
+        "background: #E85D3A; color: white; font-weight: bold;",
         `\nposition: { x: ${p.x.toFixed(3)}, y: ${p.y.toFixed(3)}, z: ${p.z.toFixed(3)} }`,
         `\nnormal: { x: ${n.x.toFixed(3)}, y: ${n.y.toFixed(3)}, z: ${n.z.toFixed(3)} }`,
         `\norientation (from normal): { x: ${Math.atan2(n.y, n.z).toFixed(3)}, y: ${Math.atan2(n.x, n.z).toFixed(3)}, z: 0 }`,
@@ -325,9 +474,8 @@ function addDevHelpers() {
 
   console.log(
     "%c DEV MODE ACTIF ",
-    "background: #2ECC71; color: white; font-weight: bold;",
-    "\nDouble-clic sur la voiture = affiche position + normale dans la console.",
-    "\nUtilise ces valeurs pour positionner les décals dans config.js."
+    "background: #3A7D44; color: white; font-weight: bold;",
+    "\nDouble-clic sur la voiture = affiche position + normale dans la console."
   );
 }
 
@@ -442,18 +590,23 @@ document.addEventListener("keydown", (e) => {
 // ---- Animation Loop ----
 function animate() {
   requestAnimationFrame(animate);
-  controls.update();
+  if (!cameraAnimating) {
+    controls.update();
+  }
   renderer.render(scene, camera);
 }
 animate();
 
-// ---- Resize ----
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+// ---- Resize (container-based) ----
+const resizeObserver = new ResizeObserver(() => {
+  const { width, height } = getViewerSize();
+  if (width === 0 || height === 0) return;
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(width, height);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
+resizeObserver.observe(viewerContainer);
 
 // ---- Scroll fade-in observer ----
 const fadeEls = document.querySelectorAll(".fade-in");
