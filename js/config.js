@@ -48,15 +48,15 @@ export const siteConfig = {
         name: "Meyline Gauzi",
         role: "Co-pilote",
         description:
-          "Étudiante en 3ème année de BUT Génie Biologique à l'IUT Paul Sabatier de Toulouse. " +
-          "Passionnée par les défis humains et solidaires.",
+          "Étudiante en BTS scientifique à Blanquefort (33).<br/><br/>" +
+          "Meyline, de son côté, souhaite s'investir dans un projet concret mêlant aventure et solidarité. Elle voit dans le 4L Trophy l'occasion de contribuer à une cause humanitaire tout en se confrontant à un défi inédit.",
       },
       {
         name: "Cyprien Gauzi",
         role: "Pilote",
         description:
-          "Employé en mécanique agricole chez AgriVision. " +
-          "Passionné d'automobile et de mécanique, c'est lui qui prépare notre 4L.",
+          "Mécanicien agricole chez Agrivision à Liposthey (40).<br/><br/>" +
+          "Cyprien, mécanicien de profession, est passionné par les vieilles mécaniques. Il est fasciné par le fait de pouvoir entretenir et restaurer des véhicules plus anciens que lui, en les ramenant à un état impeccable grâce à ses propres mains.",
       },
     ],
   },
