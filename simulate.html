@@ -84,6 +84,56 @@
       background: var(--color-cream);
     }
 
+    .sponsors-section {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--color-border);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .sponsors-section h3 {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-brown);
+    }
+    .sponsor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+      gap: 0.5rem;
+    }
+    .sponsor-btn {
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 0.3rem;
+      background: var(--color-cream);
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .sponsor-btn:hover {
+      border-color: var(--color-sand);
+      transform: scale(1.05);
+    }
+    .sponsor-btn.active {
+      border-color: var(--color-green);
+      border-width: 2px;
+    }
+    .sponsor-btn img {
+      width: 100%;
+      height: 40px;
+      object-fit: contain;
+    }
+    .sponsor-btn span {
+      display: block;
+      font-size: 0.65rem;
+      text-align: center;
+      color: var(--color-subtle);
+      margin-top: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .zone-info {
       padding: 1rem 1.2rem;
       border-bottom: 1px solid var(--color-border);
@@ -293,6 +343,11 @@
     <div class="side-panel">
       <h2>Simuler mon logo</h2>
 
+      <div class="sponsors-section">
+        <h3>Logo sponsors existants</h3>
+        <div class="sponsor-grid" id="sponsor-grid"></div>
+      </div>
+
       <div class="zone-info" id="zone-info">
         <div class="zone-info-name" id="zone-name">—</div>
         <span class="zone-info-tag" id="zone-tag">—</span>
@@ -384,14 +439,27 @@
     let lastHitNormal = null;
     let previewGroup = null; // dot + square preview
 
-    // ---- Load model + zones ----
+    // ---- Load model + zones + sponsors ----
     const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); }).catch(e => console.error("Model load error:", e));
     const loadZones = fetch("assets/zones.json").then(r => r.json()).catch(e => console.error("Zones load error:", e));
+    const loadSponsors = fetch("assets/sponsors.json").then(r => r.json()).catch(e => console.error("Sponsors load error:", e));
 
-    Promise.all([loadModel, loadZones]).then(([_, zones]) => {
+    Promise.all([loadModel, loadZones, loadSponsors]).then(([_, zones, sponsors]) => {
       zonesData = zones;
       const zone = zonesData[zoneIndex];
       if (!zone) return;
+
+      // Check if zone is reserved (not available for non-admin)
+      const isReserved = zone.reserved;
+      if (isReserved && !isDevMode()) {
+        document.querySelector(".upload-section").innerHTML = `
+          <div style="text-align:center;padding:1rem;background:#fde8e2;border-radius:8px;color:var(--color-coral);">
+            <strong>Emplacement indisponible</strong><br>
+            <small>Cet emplacement est déjà reservé.</small>
+          </div>
+        `;
+        document.getElementById("controls-section").classList.remove("active");
+      }
 
       const cat = categories[zone.category] || categories["300"];
       const colorCSS = "#" + cat.color.toString(16).padStart(6, "0");
@@ -416,10 +484,203 @@
       // Restore previous logo & params from IndexedDB
       loadFromStorage();
 
+      // Render all sponsors on 3D model
+      renderAllSponsors(sponsors);
+
+      // Render sponsors grid
+      renderSponsorsGrid(sponsors);
+
       setTimeout(() => {
         document.getElementById("viewer-hint").style.opacity = "0";
       }, 5000);
     });
+
+    function renderSponsorsGrid(sponsors) {
+      const grid = document.getElementById("sponsor-grid");
+      if (!sponsors || sponsors.length === 0) {
+        grid.innerHTML = "<p style='font-size:0.75rem;color:var(--color-subtle);'>Aucun sponsor</p>";
+        return;
+      }
+      sponsors.forEach((sponsor, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "sponsor-btn";
+        btn.title = sponsor.name + " - " + (sponsor.zoneName || "Zone " + sponsor.zone);
+        
+        if (sponsor.image && sponsor.image.startsWith("data:image")) {
+          const img = document.createElement("img");
+          img.src = sponsor.image;
+          btn.appendChild(img);
+        } else if (sponsor.image) {
+          const img = document.createElement("img");
+          img.src = sponsor.image;
+          btn.appendChild(img);
+        }
+        
+        const span = document.createElement("span");
+        span.textContent = sponsor.name;
+        btn.appendChild(span);
+
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".sponsor-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          loadSponsorLogo(sponsor);
+        });
+
+        grid.appendChild(btn);
+      });
+    }
+
+    function loadSponsorLogo(sponsor) {
+      if (!sponsor.image) return;
+      
+      const img = new Image();
+      img.onload = () => {
+        logoAspect = img.width / img.height;
+
+        uploadArea.innerHTML = "";
+        const preview = document.createElement("img");
+        preview.src = sponsor.image;
+        uploadArea.appendChild(preview);
+        const hint = document.createElement("p");
+        hint.textContent = "Logo: " + sponsor.name + " (cliquez pour changer)";
+        uploadArea.appendChild(hint);
+        uploadArea.classList.add("has-logo");
+
+        if (logoTexture) logoTexture.dispose();
+        logoTexture = new THREE.Texture(img);
+        logoTexture.needsUpdate = true;
+
+        controlsSection.classList.add("active");
+
+        // Apply sponsor params if available
+        if (sponsor.params) {
+          sizeSlider.value = sponsor.params.size || 50;
+          sizeVal.textContent = sizeSlider.value + "%";
+          rotSlider.value = sponsor.params.rotation || 0;
+          rotVal.textContent = rotSlider.value + "°";
+          flipCheckbox.checked = sponsor.params.flip || false;
+        }
+
+        if (lastHitPoint && lastHitNormal) {
+          placeLogo(lastHitPoint, lastHitNormal);
+        }
+      };
+      img.src = sponsor.image;
+    }
+
+    const placedSponsorMeshes = [];
+
+    function renderAllSponsors(sponsors) {
+      if (!sponsors || sponsors.length === 0) return;
+
+      sponsors.forEach(sponsor => {
+        if (!sponsor.image) return;
+        
+        const img = new Image();
+        img.onload = () => {
+          const texture = new THREE.Texture(img);
+          texture.needsUpdate = true;
+          
+          const zone = zonesData[sponsor.zone];
+          if (!zone) return;
+          
+          placeSponsorLogo(texture, zone, sponsor.params, sponsor.name);
+        };
+        img.src = sponsor.image;
+      });
+    }
+
+    function placeSponsorLogo(texture, zone, params, name) {
+      const projDir = zone.projection 
+        ? new THREE.Vector3(...zone.projection) 
+        : new THREE.Vector3(0, -1, 0);
+      
+      const right = new THREE.Vector3();
+      const up = new THREE.Vector3();
+      if (Math.abs(projDir.y) > 0.9) {
+        right.set(1, 0, 0);
+        up.crossVectors(right, projDir).normalize();
+        right.crossVectors(projDir, up).normalize();
+      } else {
+        up.set(0, 1, 0);
+        right.crossVectors(up, projDir).normalize();
+        up.crossVectors(projDir, right).normalize();
+      }
+
+      const rotation = (params?.rotation || 0) * Math.PI / 180;
+      if (rotation !== 0) {
+        const q = new THREE.Quaternion().setFromAxisAngle(projDir, rotation);
+        right.applyQuaternion(q);
+        up.applyQuaternion(q);
+      }
+
+      const sizePercent = (params?.size || 50) / 100;
+      const baseSize = 0.5;
+      const aspect = texture.image ? texture.image.width / texture.image.height : 1;
+      const w = baseSize * sizePercent * aspect;
+      const h = baseSize * sizePercent;
+
+      const GRID = 10;
+      const gridPts = [];
+      const gridUVs = [];
+      
+      const center = new THREE.Vector3();
+      zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
+      center.divideScalar(zone.points.length);
+      
+      const centerProj = projectPoint(center, projDir);
+      
+      for (let row = 0; row <= GRID; row++) {
+        gridPts[row] = [];
+        gridUVs[row] = [];
+        for (let col = 0; col <= GRID; col++) {
+          const u = (col / GRID - 0.5) * w;
+          const v = (row / GRID - 0.5) * h;
+          const pt = centerProj.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          gridPts[row][col] = projectPoint(pt, projDir);
+          const uCoord = (params?.flip || false) ? col / GRID : 1 - col / GRID;
+          gridUVs[row][col] = { u: uCoord, v: row / GRID };
+        }
+      }
+
+      const positions = [];
+      const uvs = [];
+      for (let row = 0; row < GRID; row++) {
+        for (let col = 0; col < GRID; col++) {
+          const a = gridPts[row][col], b = gridPts[row][col + 1];
+          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
+          const uvA = gridUVs[row][col], uvB = gridUVs[row][col + 1];
+          const uvC = gridUVs[row + 1][col], uvD = gridUVs[row + 1][col + 1];
+
+          positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          uvs.push(uvA.u, uvA.v, uvB.u, uvB.v, uvC.u, uvC.v);
+
+          positions.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
+          uvs.push(uvB.u, uvB.v, uvD.u, uvD.v, uvC.u, uvC.v);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.renderOrder = 5;
+      scene.add(mesh);
+      placedSponsorMeshes.push(mesh);
+    }
 
     // ---- Projection helper ----
     const RAY_BACKOFF = 1.0;
@@ -888,6 +1149,7 @@
         zone: zoneIndex,
         zoneName: zone.name,
         category: zone.category,
+        reserved: true,
         image: imageData,
         params: {
           size: parseInt(sizeSlider.value),
