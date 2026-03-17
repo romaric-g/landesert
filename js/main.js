@@ -106,7 +106,9 @@ const sponsorsReady = fetch("assets/sponsors.json")
   .then(r => r.json())
   .then(data => {
     sponsors = data;
+    const hiddenFromList = ["Equipage 557"];
     sponsors.forEach((sp, index) => {
+      if (hiddenFromList.includes(sp.name)) return;
       const card = document.createElement("div");
       card.className = "sponsor-card fade-in visible";
       card.dataset.sponsorIndex = index;
@@ -257,10 +259,17 @@ function projectPoint(point, direction) {
 function createSponsorDecals() {
   if (zonesData.length === 0 || sponsors.length === 0) return;
 
+  console.log("=== DEBUG ZONES ===");
+  console.log("zonesData length:", zonesData.length);
+  console.log("sponsors:", sponsors.map(s => ({name: s.name, zone: s.zone})));
+
   sponsors.forEach((sp) => {
     if (!sp.image) return;
     const zone = zonesData[sp.zone];
-    if (!zone) return;
+    if (!zone) {
+      console.warn("Zone not found:", sp.zone, "for sponsor:", sp.name);
+      return;
+    }
 
     const projDir = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
 
@@ -268,6 +277,16 @@ function createSponsorDecals() {
     const center = new THREE.Vector3();
     zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
     center.divideScalar(zone.points.length);
+
+    // Apply offset if specified
+    const offsetX = sp.params.offsetX || 0;
+    const offsetY = sp.params.offsetY || 0;
+    if (offsetX !== 0 || offsetY !== 0) {
+      center.add(right.clone().multiplyScalar(offsetX));
+      center.add(up.clone().multiplyScalar(offsetY));
+    }
+
+    console.log("Sponsor:", sp.name, "zone:", sp.zone, "center:", center);
 
     // Build local coordinate frame
     const right = new THREE.Vector3();
@@ -498,7 +517,7 @@ gltfLoader.load(
     model.updateMatrixWorld(true);
     // Wait for both zones and sponsors before placing decals
     Promise.all([
-      fetch("assets/zones.json").then(r => r.json()),
+      fetch("assets/zones.json?v=" + Date.now()).then(r => r.json()),
       sponsorsReady,
     ]).then(([zones]) => {
       zonesData = zones;
@@ -520,7 +539,7 @@ gltfLoader.load(
     console.warn("GLB model not found, using placeholder car");
     createPlaceholderCar();
     Promise.all([
-      fetch("assets/zones.json").then(r => r.json()),
+      fetch("assets/zones.json?v=" + Date.now()).then(r => r.json()),
       sponsorsReady,
     ]).then(([zones]) => {
       zonesData = zones;

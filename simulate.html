@@ -368,6 +368,7 @@
       "400":  { label: "400 €",  color: 0xc05000 },
       "500":  { label: "500 €",  color: 0xcc0000 },
       "600":  { label: "600 €",  color: 0xe85d3a },
+      "reserved":  { label: "Réservé",  color: 0x333333 },
     };
 
     // ---- Scene setup ----
@@ -384,8 +385,8 @@
     let previewGroup = null; // dot + square preview
 
     // ---- Load model + zones ----
-    const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); });
-    const loadZones = fetch("assets/zones.json").then(r => r.json());
+    const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); }).catch(e => console.error("Model load error:", e));
+    const loadZones = fetch("assets/zones.json").then(r => r.json()).catch(e => console.error("Zones load error:", e));
 
     Promise.all([loadModel, loadZones]).then(([_, zones]) => {
       zonesData = zones;
@@ -412,7 +413,7 @@
       // Position camera facing the zone
       animateCameraToZone(zone, camera, controls);
 
-      // Restore previous logo & params from localStorage
+      // Restore previous logo & params from IndexedDB
       loadFromStorage();
 
       setTimeout(() => {
@@ -435,12 +436,12 @@
       const hits = projRC.intersectObjects(carMeshes, false);
       if (hits.length > 0) {
         const hit = hits[0].point.clone();
-        // Offset slightly off surface
         hit.x -= direction.x * 0.003;
         hit.y -= direction.y * 0.003;
         hit.z -= direction.z * 0.003;
         return hit;
       }
+      // No hit - return original point (won't be projected onto car)
       return new THREE.Vector3(point.x, point.y, point.z);
     }
 
@@ -469,7 +470,7 @@
         up.crossVectors(projDir, right).normalize();
       }
 
-      const squareSize = 0.25;
+      const squareSize = 0.4; // Larger to be more visible
       const GRID = 5;
 
       // Generate grid of 3D points, project each onto car
@@ -506,7 +507,7 @@
       const fillMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.3,
+        opacity: 0.5, // More visible
         side: THREE.DoubleSide,
         depthWrite: false,
       });
@@ -574,22 +575,54 @@
     const logoInput = document.getElementById("logo-input");
     const controlsSection = document.getElementById("controls-section");
 
-    // ---- LocalStorage persistence ----
-    const LS_IMG_KEY = "simulate_logo_img";
-    const LS_PARAMS_KEY = "simulate_params_" + zoneIndex;
+    // ---- IndexedDB persistence (works without server, no admin needed) ----
+    const DB_NAME = "LandesertDB";
+    const DB_VERSION = 1;
+    const STORE_NAME = "simulateData";
 
-    function saveToStorage() {
-      localStorage.setItem(LS_PARAMS_KEY, JSON.stringify({
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+      });
+    }
+
+    async function dbSet(key, value) {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).put(value, key);
+      return new Promise((resolve) => { tx.oncomplete = resolve; });
+    }
+
+    async function dbGet(key) {
+      const db = await openDB();
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const request = tx.objectStore(STORE_NAME).get(key);
+      return new Promise((resolve) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => resolve(undefined);
+      });
+    }
+
+    async function saveToStorage() {
+      await dbSet("params_" + zoneIndex, JSON.stringify({
         size: sizeSlider.value,
         rotation: rotSlider.value,
         flip: flipCheckbox.checked,
       }));
     }
 
-    function loadFromStorage() {
-      // Restore per-zone params
-      const params = JSON.parse(localStorage.getItem(LS_PARAMS_KEY) || "null");
-      if (params) {
+    async function loadFromStorage() {
+      const paramsStr = await dbGet("params_" + zoneIndex);
+      if (paramsStr) {
+        const params = JSON.parse(paramsStr);
         sizeSlider.value = params.size;
         sizeVal.textContent = params.size + "%";
         rotSlider.value = params.rotation;
@@ -597,8 +630,7 @@
         flipCheckbox.checked = params.flip || false;
       }
 
-      // Restore shared image
-      const dataURL = localStorage.getItem(LS_IMG_KEY);
+      const dataURL = await dbGet("logo_img");
       if (dataURL) {
         restoreImage(dataURL);
       }
@@ -646,9 +678,9 @@
 
     function handleFile(file) {
       const reader = new FileReader();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const dataURL = ev.target.result;
-        localStorage.setItem(LS_IMG_KEY, dataURL);
+        await dbSet("logo_img", dataURL);
         restoreImage(dataURL);
       };
       reader.readAsDataURL(file);
@@ -683,17 +715,16 @@
     });
 
     // ---- Remove ----
-    document.getElementById("btn-remove").addEventListener("click", () => {
+    document.getElementById("btn-remove").addEventListener("click", async () => {
       removeDecal();
       controlsSection.classList.remove("active");
       uploadArea.innerHTML = "<p>Cliquez ou glissez une image ici</p>";
       uploadArea.classList.remove("has-logo");
       if (logoTexture) { logoTexture.dispose(); logoTexture = null; }
-      localStorage.removeItem(LS_IMG_KEY);
-      localStorage.removeItem(LS_PARAMS_KEY);
+      await dbSet("logo_img", null);
+      await dbSet("params_" + zoneIndex, null);
       lastHitPoint = null;
       lastHitNormal = null;
-      // Restore zone preview
       const zone = zonesData[zoneIndex];
       if (zone) showZonePreview(zone);
     });
@@ -842,7 +873,7 @@
       btnExport.style.display = "block";
     }
 
-    btnExport.addEventListener("click", () => {
+    btnExport.addEventListener("click", async () => {
       if (!logoTexture) {
         showToast("Aucun logo à exporter");
         return;
@@ -850,13 +881,14 @@
       const zone = zonesData[zoneIndex];
       if (!zone) return;
 
+      const imageData = await dbGet("logo_img");
       const sponsorData = {
         name: "",
         description: "",
         zone: zoneIndex,
         zoneName: zone.name,
         category: zone.category,
-        image: localStorage.getItem(LS_IMG_KEY),
+        image: imageData,
         params: {
           size: parseInt(sizeSlider.value),
           rotation: parseInt(rotSlider.value),

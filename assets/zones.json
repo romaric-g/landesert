@@ -96,6 +96,39 @@
     ]
   },
   {
+    "name": "Porte avant zone basse gauche",
+    "category": "reserved",
+    "reserved": true,
+    "points": [
+      {
+        "x": -0.33,
+        "y": 0.54,
+        "z": 0.47
+      },
+      {
+        "x": -0.37,
+        "y": 0.27,
+        "z": 0.47
+      },
+      {
+        "x": -0.05,
+        "y": 0.27,
+        "z": 0.47
+      },
+      {
+        "x": -0.02,
+        "y": 0.54,
+        "z": 0.47
+      }
+    ],
+    "points_hash": "pavbag",
+    "projection": [
+      0,
+      0,
+      -1
+    ]
+  },
+  {
     "name": "Vitre de custode gauche",
     "category": "300",
     "points": [

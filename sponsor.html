@@ -606,9 +606,8 @@
           <span class="zone-card-status ${statusClass}">${statusText}</span>
         `;
 
-        if (!zone.data.reserved) {
-          card.addEventListener("click", () => selectZone(i));
-        }
+        // Allow clicking on all zones
+        card.addEventListener("click", () => selectZone(i));
 
         listEl.appendChild(card);
       });
