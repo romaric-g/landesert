@@ -119,10 +119,17 @@ export const socialLinks = [
 ];
 
 export const galleryImages = [
-  { src: "https://placehold.co/600x400/C2956B/1A1A2E?text=Photo+1", alt: "Photo d'équipe 1" },
-  { src: "https://placehold.co/600x400/1A1A2E/F0E6D3?text=Photo+2", alt: "Préparation de la 4L" },
-  { src: "https://placehold.co/600x400/E94D1A/F0E6D3?text=Photo+3", alt: "Sur la route" },
-  { src: "https://placehold.co/600x400/8B6F5E/F0E6D3?text=Photo+4", alt: "Paysage désert" },
-  { src: "https://placehold.co/600x400/C2956B/1A1A2E?text=Photo+5", alt: "Arrivée au Maroc" },
-  { src: "https://placehold.co/600x400/1A1A2E/F0E6D3?text=Photo+6", alt: "L'équipe au complet" },
+  { small: "assets/images/gallery/small/img_0051.jpg", src: "assets/images/gallery/img_0051.jpg", alt: "Photo 1" },
+  { small: "assets/images/gallery/small/img_2364.jpg", src: "assets/images/gallery/img_2364.jpg", alt: "Photo 2" },
+  { small: "assets/images/gallery/small/img_2365.jpg", src: "assets/images/gallery/img_2365.jpg", alt: "Photo 3" },
+  { small: "assets/images/gallery/small/img_2366.jpg", src: "assets/images/gallery/img_2366.jpg", alt: "Photo 4" },
+  { small: "assets/images/gallery/small/img_2387.jpg", src: "assets/images/gallery/img_2387.jpg", alt: "Photo 5" },
+  { small: "assets/images/gallery/small/img_2561.jpg", src: "assets/images/gallery/img_2561.jpg", alt: "Photo 6" },
+  { small: "assets/images/gallery/small/img_2568.jpg", src: "assets/images/gallery/img_2568.jpg", alt: "Photo 7" },
+  { small: "assets/images/gallery/small/img_2617.jpg", src: "assets/images/gallery/img_2617.jpg", alt: "Photo 8" },
+  { small: "assets/images/gallery/small/img_2620.jpg", src: "assets/images/gallery/img_2620.jpg", alt: "Photo 9" },
+  { small: "assets/images/gallery/small/img_9668.jpg", src: "assets/images/gallery/img_9668.jpg", alt: "Photo 10" },
+  { small: "assets/images/gallery/small/img_9673.jpg", src: "assets/images/gallery/img_9673.jpg", alt: "Photo 11" },
+  { small: "assets/images/gallery/small/img_9678.jpg", src: "assets/images/gallery/img_9678.jpg", alt: "Photo 12" },
+  { small: "assets/images/gallery/small/img_9783.jpg", src: "assets/images/gallery/img_9783.jpg", alt: "Photo 13" },
 ];

@@ -15,7 +15,7 @@ galleryImages.forEach((img, i) => {
   item.className = "gallery-item fade-in";
 
   const imgEl = document.createElement("img");
-  imgEl.src = img.src;
+  imgEl.src = img.small || img.src;
   imgEl.alt = img.alt;
   imgEl.loading = "lazy";
 
