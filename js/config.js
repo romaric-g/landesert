@@ -3,35 +3,7 @@
 // Modifie ce fichier pour personnaliser ton site
 // ============================================
 
-// Toggle dev mode from console: toggle_dev()
-window.toggle_dev = function() {
-  const key = "4ltrophy_dev_mode";
-  const active = localStorage.getItem(key) === "1";
-  if (active) {
-    localStorage.removeItem(key);
-    console.log("%cMode développeur désactivé", "color:red;font-weight:bold");
-  } else {
-    localStorage.setItem(key, "1");
-    console.log("%cMode développeur activé", "color:green;font-weight:bold");
-  }
-  location.reload();
-};
-
-// Show dev banner if active
-if (localStorage.getItem("4ltrophy_dev_mode") === "1") {
-  document.addEventListener("DOMContentLoaded", () => {
-    const banner = document.createElement("div");
-    banner.textContent = "Mode développeur";
-    Object.assign(banner.style, {
-      position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999",
-      background: "#e85d3a", color: "white", textAlign: "center",
-      padding: "4px 0", fontSize: "12px", fontFamily: "sans-serif",
-      fontWeight: "600", letterSpacing: "1px", pointerEvents: "none",
-    });
-    document.body.appendChild(banner);
-    document.body.style.paddingTop = "24px";
-  });
-}
+// Dev mode is handled by common.js — no duplication here
 
 export const siteConfig = {
   teamName: "Landesert",

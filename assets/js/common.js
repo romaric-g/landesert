@@ -26,20 +26,34 @@ window.toggle_dev = function() {
   location.reload();
 };
 
+// 4x D in under 1 second toggles dev mode (localhost only)
+if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+  const presses = [];
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "d" && e.key !== "D") { presses.length = 0; return; }
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+    presses.push(Date.now());
+    if (presses.length >= 4) {
+      if (presses[presses.length - 1] - presses[presses.length - 4] < 1000) {
+        presses.length = 0;
+        window.toggle_dev();
+      }
+    }
+  });
+}
+
 // Show dev banner if active
 if (isDevMode()) {
-  document.addEventListener("DOMContentLoaded", () => {
-    const banner = document.createElement("div");
-    banner.textContent = "Mode développeur";
-    Object.assign(banner.style, {
-      position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999",
-      background: "#e85d3a", color: "white", textAlign: "center",
-      padding: "4px 0", fontSize: "12px", fontFamily: "sans-serif",
-      fontWeight: "600", letterSpacing: "1px", pointerEvents: "none",
-    });
-    document.body.appendChild(banner);
-    document.body.style.paddingTop = "24px";
+  const banner = document.createElement("div");
+  banner.textContent = "Mode développeur";
+  Object.assign(banner.style, {
+    position: "fixed", top: "0", left: "0", right: "0", zIndex: "9999",
+    background: "#e85d3a", color: "white", textAlign: "center",
+    padding: "4px 0", fontSize: "12px", fontFamily: "sans-serif",
+    fontWeight: "600", letterSpacing: "1px", pointerEvents: "none",
   });
+  document.body.appendChild(banner);
+  document.body.style.paddingTop = "24px";
 }
 
 // ---- Constants ----
