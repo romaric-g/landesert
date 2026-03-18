@@ -1,8 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-// DecalGeometry no longer used — sponsors use grid-based projection
 import { siteConfig, modelPath, socialLinks, carColors } from "./config.js";
+import { loadAndPlaceSponsors, animateCameraToSponsor } from "../assets/js/common.js";
 
 // ---- DOM refs ----
 const canvas = document.getElementById("car-viewer");
@@ -101,7 +101,7 @@ const sponsorsList = document.querySelector(".sponsors-list");
 const sponsorCardEls = [];
 let sponsors = [];
 
-// Load sponsors from JSON
+// Load sponsors from JSON (cards only — decals placed after model loads)
 const sponsorsReady = fetch("assets/sponsors.json")
   .then(r => r.json())
   .then(data => {
@@ -134,7 +134,6 @@ const sponsorsReady = fetch("assets/sponsors.json")
       card.addEventListener("click", () => {
         focusOnSponsor(sp, index);
       });
-
     });
   });
 
@@ -227,200 +226,30 @@ controls.addEventListener("end", () => {
 
 // ---- Car meshes (for raycasting decals) ----
 const carMeshes = [];
-const decalMeshes = [];
-
-// ---- Sponsor decal creation (grid-based projection) ----
-let zonesData = [];
-
-const RAY_BACKOFF = 1.0;
-const projRC = new THREE.Raycaster();
-
-function projectPoint(point, direction) {
-  const origin = new THREE.Vector3(
-    point.x - direction.x * RAY_BACKOFF,
-    point.y - direction.y * RAY_BACKOFF,
-    point.z - direction.z * RAY_BACKOFF
-  );
-  projRC.set(origin, direction);
-  projRC.far = 1.5;
-  const hits = projRC.intersectObjects(carMeshes, false);
-  if (hits.length > 0) {
-    const hit = hits[0].point.clone();
-    hit.x -= direction.x * 0.003;
-    hit.y -= direction.y * 0.003;
-    hit.z -= direction.z * 0.003;
-    return hit;
-  }
-  return new THREE.Vector3(point.x, point.y, point.z);
-}
-
-function createSponsorDecals() {
-  if (zonesData.length === 0 || sponsors.length === 0) return;
-
-  sponsors.forEach((sp) => {
-    if (!sp.image) return;
-    const zone = zonesData[sp.zone];
-    if (!zone) return;
-
-    const projDir = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
-
-    // Compute zone center
-    const center = new THREE.Vector3();
-    zone.points.forEach(p => center.add(new THREE.Vector3(p.x, p.y, p.z)));
-    center.divideScalar(zone.points.length);
-
-    // Build local coordinate frame
-    const right = new THREE.Vector3();
-    const up = new THREE.Vector3();
-    if (Math.abs(projDir.y) > 0.9) {
-      right.set(1, 0, 0);
-      up.crossVectors(right, projDir).normalize();
-      right.crossVectors(projDir, up).normalize();
-    } else {
-      up.set(0, 1, 0);
-      right.crossVectors(up, projDir).normalize();
-      up.crossVectors(projDir, right).normalize();
-    }
-
-    // Apply rotation
-    const rotAngle = (sp.params.rotation || 0) * Math.PI / 180;
-    if (rotAngle !== 0) {
-      const q = new THREE.Quaternion().setFromAxisAngle(projDir, rotAngle);
-      right.applyQuaternion(q);
-      up.applyQuaternion(q);
-    }
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const texture = new THREE.Texture(img);
-      texture.colorSpace = THREE.SRGBColorSpace;
-      texture.needsUpdate = true;
-      const logoAspect = img.width / img.height;
-      const sizePercent = (sp.params.size || 50) / 100;
-      const baseSize = 0.5;
-      const w = baseSize * sizePercent * logoAspect;
-      const h = baseSize * sizePercent;
-      const flip = sp.params.flip || false;
-
-      const GRID = 10;
-      const gridPts = [];
-      const gridUVs = [];
-      for (let row = 0; row <= GRID; row++) {
-        gridPts[row] = [];
-        gridUVs[row] = [];
-        for (let col = 0; col <= GRID; col++) {
-          const u = (col / GRID - 0.5) * w;
-          const v = (row / GRID - 0.5) * h;
-          const pt = center.clone()
-            .add(right.clone().multiplyScalar(u))
-            .add(up.clone().multiplyScalar(v));
-          gridPts[row][col] = projectPoint(pt, projDir);
-          const uCoord = flip ? col / GRID : 1 - col / GRID;
-          gridUVs[row][col] = { u: uCoord, v: row / GRID };
-        }
-      }
-
-      const positions = [];
-      const uvs = [];
-      for (let row = 0; row < GRID; row++) {
-        for (let col = 0; col < GRID; col++) {
-          const a = gridPts[row][col], b = gridPts[row][col + 1];
-          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
-          const uvA = gridUVs[row][col], uvB = gridUVs[row][col + 1];
-          const uvC = gridUVs[row + 1][col], uvD = gridUVs[row + 1][col + 1];
-          positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
-          uvs.push(uvA.u, uvA.v, uvB.u, uvB.v, uvC.u, uvC.v);
-          positions.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
-          uvs.push(uvB.u, uvB.v, uvD.u, uvD.v, uvC.u, uvC.v);
-        }
-      }
-
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-      geo.computeVertexNormals();
-
-      const mat = new THREE.MeshStandardMaterial({
-        map: texture,
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        polygonOffset: true,
-        polygonOffsetFactor: -4,
-        roughness: 0.5,
-        metalness: 0.0,
-      });
-
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.userData.sponsor = sp;
-      mesh.renderOrder = 1;
-      scene.add(mesh);
-      decalMeshes.push(mesh);
-    };
-    img.src = sp.image;
-  });
-}
+let decalMeshes = [];
 
 // ---- Camera animation to focus on a sponsor's decal ----
 let cameraAnimating = false;
 
 function focusOnSponsor(sp, index) {
-  // Highlight active card
   sponsorCardEls.forEach((el) => el.classList.remove("active"));
   sponsorCardEls[index].classList.add("active");
 
-  const zone = zonesData[sp.zone];
-  if (!zone) return;
+  if (!sp.position || !sp.projection) return;
 
-  // Compute zone center
-  const targetPos = new THREE.Vector3();
-  zone.points.forEach(p => targetPos.add(new THREE.Vector3(p.x, p.y, p.z)));
-  targetPos.divideScalar(zone.points.length);
-
-  // Camera direction from zone projection
-  let camDir;
-  const proj = new THREE.Vector3(...(zone.projection || [0, -1, 0]));
-  if (Math.abs(proj.y) > 0.9) {
-    camDir = new THREE.Vector3(-0.5, 0.8, 0.5).normalize();
-  } else {
-    camDir = proj.clone().negate();
-    camDir.y += 0.4;
-    camDir.normalize();
-  }
-  const newCamPos = targetPos.clone().add(camDir.multiplyScalar(2.5));
-
-  // Animate camera
   controls.autoRotate = false;
   clearTimeout(autoRotateTimeout);
   cameraAnimating = true;
 
-  const startPos = camera.position.clone();
-  const startTarget = controls.target.clone();
-  const endTarget = targetPos.clone();
-  const duration = 800;
-  const startTime = performance.now();
+  animateCameraToSponsor(sp, camera, controls);
 
-  function animateCamera(now) {
-    const t = Math.min((now - startTime) / duration, 1);
-    // Ease out cubic
-    const ease = 1 - Math.pow(1 - t, 3);
-
-    camera.position.lerpVectors(startPos, newCamPos, ease);
-    controls.target.lerpVectors(startTarget, endTarget, ease);
-    controls.update();
-
-    if (t < 1) {
-      requestAnimationFrame(animateCamera);
-    } else {
-      cameraAnimating = false;
-      autoRotateTimeout = setTimeout(() => {
-        controls.autoRotate = true;
-      }, 5000);
-    }
-  }
-
-  requestAnimationFrame(animateCamera);
+  // Re-enable auto-rotate after animation
+  setTimeout(() => {
+    cameraAnimating = false;
+    autoRotateTimeout = setTimeout(() => {
+      controls.autoRotate = true;
+    }, 5000);
+  }, 700);
 }
 
 // ---- Placeholder car ----
@@ -496,13 +325,11 @@ gltfLoader.load(
     scene.add(model);
 
     model.updateMatrixWorld(true);
-    // Wait for both zones and sponsors before placing decals
-    Promise.all([
-      fetch("assets/zones.json").then(r => r.json()),
-      sponsorsReady,
-    ]).then(([zones]) => {
-      zonesData = zones;
-      createSponsorDecals();
+    // Wait for sponsors data, then place logos on car using position/projection
+    sponsorsReady.then(() => {
+      loadAndPlaceSponsors(carMeshes, scene).then(({ decalMeshes: meshes }) => {
+        decalMeshes = meshes;
+      });
     });
     hideLoader();
 
@@ -519,12 +346,10 @@ gltfLoader.load(
   () => {
     console.warn("GLB model not found, using placeholder car");
     createPlaceholderCar();
-    Promise.all([
-      fetch("assets/zones.json").then(r => r.json()),
-      sponsorsReady,
-    ]).then(([zones]) => {
-      zonesData = zones;
-      createSponsorDecals();
+    sponsorsReady.then(() => {
+      loadAndPlaceSponsors(carMeshes, scene).then(({ decalMeshes: meshes }) => {
+        decalMeshes = meshes;
+      });
     });
     hideLoader();
     if (siteConfig.devMode) addDevHelpers();

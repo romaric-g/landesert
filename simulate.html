@@ -352,12 +352,13 @@
   <script type="module">
     import * as THREE from "three";
     import {
-      createScene, loadCarModel, showToast, zoneHash, animateCameraToZone, isDevMode
+      createScene, loadCarModel, showToast, zoneHash, animateCameraToZone, isDevMode,
+      loadAndPlaceSponsors
     } from "./assets/js/common.js";
 
-    // ---- Parse zone param ----
+    // ---- Parse zone param (zone ID string) ----
     const params = new URLSearchParams(location.search);
-    const zoneIndex = parseInt(params.get("zone")) || 0;
+    const zoneId = params.get("zone") || "";
 
     const categories = {
       "50":   { label: "50 €",   color: 0x9b5999 },
@@ -389,7 +390,7 @@
 
     Promise.all([loadModel, loadZones]).then(([_, zones]) => {
       zonesData = zones;
-      const zone = zonesData[zoneIndex];
+      const zone = zonesData.find(z => z.id === zoneId);
       if (!zone) return;
 
       const cat = categories[zone.category] || categories["300"];
@@ -408,6 +409,9 @@
       // Show zone preview: project center onto car surface
       scene.updateMatrixWorld(true);
       showZonePreview(zone);
+
+      // Place existing sponsors on the car (read-only display)
+      loadAndPlaceSponsors(carMeshes, scene);
 
       // Position camera facing the zone
       animateCameraToZone(zone, camera, controls);
@@ -576,7 +580,7 @@
 
     // ---- LocalStorage persistence ----
     const LS_IMG_KEY = "simulate_logo_img";
-    const LS_PARAMS_KEY = "simulate_params_" + zoneIndex;
+    const LS_PARAMS_KEY = "simulate_params_" + zoneId;
 
     function saveToStorage() {
       localStorage.setItem(LS_PARAMS_KEY, JSON.stringify({
@@ -694,7 +698,7 @@
       lastHitPoint = null;
       lastHitNormal = null;
       // Restore zone preview
-      const zone = zonesData[zoneIndex];
+      const zone = zonesData.find(z => z.id === zoneId);
       if (zone) showZonePreview(zone);
     });
 
@@ -731,7 +735,7 @@
       if (hits.length > 0) {
         lastHitPoint = hits[0].point.clone();
         // Use zone projection as the normal direction for orientation
-        const zone = zonesData[zoneIndex];
+        const zone = zonesData.find(z => z.id === zoneId);
         if (zone && zone.projection) {
           lastHitNormal = new THREE.Vector3(...zone.projection).negate(); // outward normal
         } else {
@@ -748,7 +752,7 @@
       removePreview();
       if (!logoTexture) return;
 
-      const zone = zonesData[zoneIndex];
+      const zone = zonesData.find(z => z.id === zoneId);
       const projDir = zone && zone.projection
         ? new THREE.Vector3(...zone.projection)
         : normal.clone().negate();
@@ -847,15 +851,27 @@
         showToast("Aucun logo à exporter");
         return;
       }
-      const zone = zonesData[zoneIndex];
-      if (!zone) return;
+      if (!lastHitPoint) {
+        showToast("Placez d'abord le logo sur la voiture");
+        return;
+      }
+      const zone = zonesData.find(z => z.id === zoneId);
+
+      // Use the actual clicked position and zone projection
+      const projection = zone && zone.projection ? zone.projection : [0, -1, 0];
 
       const sponsorData = {
         name: "",
         description: "",
-        zone: zoneIndex,
-        zoneName: zone.name,
-        category: zone.category,
+        position: {
+          x: parseFloat(lastHitPoint.x.toFixed(4)),
+          y: parseFloat(lastHitPoint.y.toFixed(4)),
+          z: parseFloat(lastHitPoint.z.toFixed(4)),
+        },
+        projection: projection,
+        zone: zoneId,
+        zoneName: zone ? zone.name : "",
+        category: zone ? zone.category : "",
         image: localStorage.getItem(LS_IMG_KEY),
         params: {
           size: parseInt(sizeSlider.value),
@@ -868,7 +884,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const safeName = zone.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/_+$/, "");
+      const safeName = (zone ? zone.name : "custom").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/_+$/, "");
       a.download = `sponsor_${safeName}.json`;
       a.click();
       URL.revokeObjectURL(url);

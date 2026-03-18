@@ -322,7 +322,8 @@
     import { LineGeometry } from "three/addons/lines/LineGeometry.js";
     import {
       isLocalhost, createScene, loadCarModel,
-      makeLineMat, makeFillMat, showToast, zoneHash, animateCameraToZone
+      makeLineMat, makeFillMat, showToast, zoneHash, animateCameraToZone,
+      loadAndPlaceSponsors
     } from "./assets/js/common.js";
 
     // ---- Scene setup ----
@@ -393,6 +394,9 @@
       });
 
       buildZonesFromProjected(projectedData);
+
+      // Place existing sponsor logos on the car
+      loadAndPlaceSponsors(carMeshes, scene);
 
       // Auto-download cache only on localhost
       if (needsNewCache && isLocalhost()) {
@@ -642,7 +646,8 @@
       btnSimulate.classList.toggle("active", show);
       btnFloatingSimulate.classList.toggle("active", show);
       if (show) {
-        const url = `simulate.html?zone=${selectedZoneIndex}`;
+        const zoneId = zones[selectedZoneIndex].data.id;
+        const url = `simulate.html?zone=${encodeURIComponent(zoneId)}`;
         btnSimulate.href = url;
         btnFloatingSimulate.href = url;
       }

@@ -198,6 +198,177 @@ export function zoneHash(z) {
   return h.toString(36);
 }
 
+// ---- Place a sponsor logo on the car (shared by main, sponsor, simulate pages) ----
+// sp must have: image (url or data-uri), position {x,y,z}, projection [x,y,z], params {size, rotation, flip}
+// carMeshes: array of THREE.Mesh from the loaded car model
+// Returns a promise that resolves to the decal mesh (or null)
+export function placeSponsorOnCar(sp, carMeshes, scene) {
+  return new Promise((resolve) => {
+    if (!sp.image || !sp.position || !sp.projection) { resolve(null); return; }
+
+    const projDir = new THREE.Vector3(...sp.projection);
+    const center = new THREE.Vector3(sp.position.x, sp.position.y, sp.position.z);
+
+    // Build local coordinate frame
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    if (Math.abs(projDir.y) > 0.9) {
+      right.set(1, 0, 0);
+      up.crossVectors(right, projDir).normalize();
+      right.crossVectors(projDir, up).normalize();
+    } else {
+      up.set(0, 1, 0);
+      right.crossVectors(up, projDir).normalize();
+      up.crossVectors(projDir, right).normalize();
+    }
+
+    // Apply rotation
+    const rotAngle = ((sp.params && sp.params.rotation) || 0) * Math.PI / 180;
+    if (rotAngle !== 0) {
+      const q = new THREE.Quaternion().setFromAxisAngle(projDir, rotAngle);
+      right.applyQuaternion(q);
+      up.applyQuaternion(q);
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const texture = new THREE.Texture(img);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.needsUpdate = true;
+      const logoAspect = img.width / img.height;
+      const sizePercent = ((sp.params && sp.params.size) || 50) / 100;
+      const baseSize = 0.5;
+      const w = baseSize * sizePercent * logoAspect;
+      const h = baseSize * sizePercent;
+      const flip = (sp.params && sp.params.flip) || false;
+
+      // Raycast projection helper
+      const RAY_BACKOFF = 1.0;
+      const rc = new THREE.Raycaster();
+      function projectPt(point) {
+        const origin = new THREE.Vector3(
+          point.x - projDir.x * RAY_BACKOFF,
+          point.y - projDir.y * RAY_BACKOFF,
+          point.z - projDir.z * RAY_BACKOFF
+        );
+        rc.set(origin, projDir);
+        rc.far = 1.5;
+        const hits = rc.intersectObjects(carMeshes, false);
+        if (hits.length > 0) {
+          const hit = hits[0].point.clone();
+          hit.x -= projDir.x * 0.003;
+          hit.y -= projDir.y * 0.003;
+          hit.z -= projDir.z * 0.003;
+          return hit;
+        }
+        return new THREE.Vector3(point.x, point.y, point.z);
+      }
+
+      const GRID = 10;
+      const gridPts = [];
+      const gridUVs = [];
+      for (let row = 0; row <= GRID; row++) {
+        gridPts[row] = [];
+        gridUVs[row] = [];
+        for (let col = 0; col <= GRID; col++) {
+          const u = (col / GRID - 0.5) * w;
+          const v = (row / GRID - 0.5) * h;
+          const pt = center.clone()
+            .add(right.clone().multiplyScalar(u))
+            .add(up.clone().multiplyScalar(v));
+          gridPts[row][col] = projectPt(pt);
+          const uCoord = flip ? col / GRID : 1 - col / GRID;
+          gridUVs[row][col] = { u: uCoord, v: row / GRID };
+        }
+      }
+
+      const positions = [];
+      const uvs = [];
+      for (let row = 0; row < GRID; row++) {
+        for (let col = 0; col < GRID; col++) {
+          const a = gridPts[row][col], b = gridPts[row][col + 1];
+          const c = gridPts[row + 1][col], d = gridPts[row + 1][col + 1];
+          const uvA = gridUVs[row][col], uvB = gridUVs[row][col + 1];
+          const uvC = gridUVs[row + 1][col], uvD = gridUVs[row + 1][col + 1];
+          positions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+          uvs.push(uvA.u, uvA.v, uvB.u, uvB.v, uvC.u, uvC.v);
+          positions.push(b.x, b.y, b.z, d.x, d.y, d.z, c.x, c.y, c.z);
+          uvs.push(uvB.u, uvB.v, uvD.u, uvD.v, uvC.u, uvC.v);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshStandardMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        roughness: 0.5,
+        metalness: 0.0,
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.userData.sponsor = sp;
+      mesh.renderOrder = 1;
+      scene.add(mesh);
+      resolve(mesh);
+    };
+    img.onerror = () => resolve(null);
+    img.src = sp.image;
+  });
+}
+
+// ---- Load sponsors from JSON and place them on the car ----
+export function loadAndPlaceSponsors(carMeshes, scene) {
+  return fetch("assets/sponsors.json")
+    .then(r => r.json())
+    .then(sponsors => {
+      const promises = sponsors.map(sp => placeSponsorOnCar(sp, carMeshes, scene));
+      return Promise.all(promises).then(meshes => ({
+        sponsors,
+        decalMeshes: meshes.filter(Boolean),
+      }));
+    });
+}
+
+// ---- Animate camera to a sponsor's position ----
+export function animateCameraToSponsor(sp, camera, controls) {
+  if (!sp.position || !sp.projection) return;
+
+  const targetPos = new THREE.Vector3(sp.position.x, sp.position.y, sp.position.z);
+  const proj = new THREE.Vector3(...sp.projection);
+
+  let camDir;
+  if (Math.abs(proj.y) > 0.9) {
+    camDir = new THREE.Vector3(-0.5, 0.8, 0.5).normalize();
+  } else {
+    camDir = proj.clone().negate();
+    camDir.y += 0.4;
+    camDir.normalize();
+  }
+  const newCamPos = targetPos.clone().add(camDir.multiplyScalar(2.5));
+
+  const startPos = camera.position.clone();
+  const startTarget = controls.target.clone();
+  const duration = 600, startTime = performance.now();
+  function anim(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    camera.position.lerpVectors(startPos, newCamPos, ease);
+    controls.target.lerpVectors(startTarget, targetPos, ease);
+    controls.update();
+    if (t < 1) requestAnimationFrame(anim);
+  }
+  requestAnimationFrame(anim);
+}
+
 // ---- Camera animation ----
 export function animateCameraToZone(zone, camera, controls) {
   const center = new THREE.Vector3();
