@@ -179,12 +179,34 @@
       flex: 1;
       accent-color: var(--color-brown);
     }
-    .slider-row .slider-val {
+    .slider-input {
+      width: 52px;
+      padding: 0.25rem 0.3rem;
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
       font-family: var(--font-heading);
       font-weight: 700;
       font-size: 0.85rem;
-      min-width: 3rem;
-      text-align: right;
+      text-align: center;
+      color: var(--color-brown);
+      background: var(--color-cream);
+      outline: none;
+      -moz-appearance: textfield;
+    }
+    .slider-input::-webkit-inner-spin-button,
+    .slider-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .slider-input:focus {
+      border-color: var(--color-coral);
+    }
+    .slider-unit {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--color-subtle);
+      min-width: 1rem;
     }
 
     .btn-remove {
@@ -312,13 +334,15 @@
         <label>Taille du logo</label>
         <div class="slider-row">
           <input type="range" id="size-slider" min="5" max="200" value="50">
-          <span class="slider-val" id="size-val">50%</span>
+          <input type="number" class="slider-input" id="size-input" min="5" max="200" value="50">
+          <span class="slider-unit">%</span>
         </div>
 
         <label>Rotation</label>
         <div class="slider-row">
           <input type="range" id="rotation-slider" min="-180" max="180" value="0">
-          <span class="slider-val" id="rotation-val">0°</span>
+          <input type="number" class="slider-input" id="rotation-input" min="-180" max="180" value="0">
+          <span class="slider-unit">°</span>
         </div>
 
         <label style="margin-top:0.5rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;">
@@ -595,9 +619,9 @@
       const params = JSON.parse(localStorage.getItem(LS_PARAMS_KEY) || "null");
       if (params) {
         sizeSlider.value = params.size;
-        sizeVal.textContent = params.size + "%";
+        sizeInput.value = params.size;
         rotSlider.value = params.rotation;
-        rotVal.textContent = params.rotation + "°";
+        rotInput.value = params.rotation;
         flipCheckbox.checked = params.flip || false;
       }
 
@@ -658,26 +682,52 @@
       reader.readAsDataURL(file);
     }
 
-    // ---- Size & rotation sliders ----
+    // ---- Size & rotation sliders + inputs ----
     const sizeSlider = document.getElementById("size-slider");
-    const sizeVal = document.getElementById("size-val");
+    const sizeInput = document.getElementById("size-input");
     const rotSlider = document.getElementById("rotation-slider");
-    const rotVal = document.getElementById("rotation-val");
+    const rotInput = document.getElementById("rotation-input");
+
+    function applySize() {
+      saveToStorage();
+      if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    }
 
     sizeSlider.addEventListener("input", () => {
-      sizeVal.textContent = sizeSlider.value + "%";
+      sizeInput.value = sizeSlider.value;
     });
-    sizeSlider.addEventListener("change", () => {
-      saveToStorage();
-      if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    sizeSlider.addEventListener("change", applySize);
+
+    sizeInput.addEventListener("input", () => {
+      const v = Math.max(5, Math.min(200, parseInt(sizeInput.value) || 5));
+      sizeSlider.value = v;
+    });
+    sizeInput.addEventListener("change", () => {
+      const v = Math.max(5, Math.min(200, parseInt(sizeInput.value) || 5));
+      sizeInput.value = v;
+      sizeSlider.value = v;
+      applySize();
     });
 
-    rotSlider.addEventListener("input", () => {
-      rotVal.textContent = rotSlider.value + "°";
-    });
-    rotSlider.addEventListener("change", () => {
+    function applyRotation() {
       saveToStorage();
       if (lastHitPoint) placeLogo(lastHitPoint, lastHitNormal);
+    }
+
+    rotSlider.addEventListener("input", () => {
+      rotInput.value = rotSlider.value;
+    });
+    rotSlider.addEventListener("change", applyRotation);
+
+    rotInput.addEventListener("input", () => {
+      const v = Math.max(-180, Math.min(180, parseInt(rotInput.value) || 0));
+      rotSlider.value = v;
+    });
+    rotInput.addEventListener("change", () => {
+      const v = Math.max(-180, Math.min(180, parseInt(rotInput.value) || 0));
+      rotInput.value = v;
+      rotSlider.value = v;
+      applyRotation();
     });
 
     const flipCheckbox = document.getElementById("flip-checkbox");

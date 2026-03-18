@@ -122,13 +122,6 @@
     .zone-card.selected {
       border-color: var(--color-coral);
     }
-    .zone-card.reserved {
-      opacity: 0.5;
-      cursor: default;
-    }
-    .zone-card.reserved:hover {
-      border-color: var(--color-border);
-    }
 
     .zone-card-tag {
       flex-shrink: 0;
@@ -158,13 +151,9 @@
       border-radius: 20px;
       font-weight: 600;
     }
-    .zone-card-status.available {
+    .zone-card-status {
       background: #e2f0e5;
       color: var(--color-green);
-    }
-    .zone-card-status.reserved {
-      background: #fde8e2;
-      color: var(--color-coral);
     }
 
     /* ---- Contact section ---- */
@@ -368,16 +357,23 @@
     const zones = [];
     let selectedZoneIndex = -1;
 
-    // ---- Load model + zones + cache ----
+    // ---- Load model + zones + sponsors + cache ----
     const loadModel = loadCarModel(scene).then(meshes => { carMeshes.push(...meshes); });
 
-    const loadZones = fetch("assets/zones.json").then(r => r.json()).then(data => {
-      zonesData = data.map(z => ({ ...z, category: z.category || "300", reserved: z.reserved || false }));
-    });
+    const loadZones = fetch("assets/zones.json").then(r => r.json());
+    const loadSponsors = fetch("assets/sponsors.json").then(r => r.json()).catch(() => []);
     const loadCache = fetch("assets/zones-projected.json").then(r => r.ok ? r.json() : {}).catch(() => ({}));
 
-    Promise.all([loadModel, loadZones, loadCache]).then(([_, __, cache]) => {
+    Promise.all([loadModel, loadZones, loadSponsors, loadCache]).then(([_, allZones, sponsors, cache]) => {
       scene.updateMatrixWorld(true);
+
+      // Build set of reserved zone IDs from sponsors
+      const reservedIds = new Set(sponsors.map(sp => sp.zone).filter(Boolean));
+
+      // Filter out reserved zones — they don't appear at all
+      zonesData = allZones
+        .filter(z => !reservedIds.has(z.id))
+        .map(z => ({ ...z, category: z.category || "300" }));
 
       // Cache is { hash: { outline, fill } }
       let needsNewCache = false;
@@ -597,23 +593,17 @@
         const card = document.createElement("div");
         card.className = "zone-card";
         if (i === selectedZoneIndex) card.classList.add("selected");
-        if (zone.data.reserved) card.classList.add("reserved");
 
-        const statusClass = zone.data.reserved ? "reserved" : "available";
-        const statusText = zone.data.reserved ? "Réservé" : "Disponible";
         const cat = categories[zone.data.category] || categories["300"];
         const colorCSS = "#" + cat.color.toString(16).padStart(6, "0");
 
         card.innerHTML = `
           <span class="zone-card-tag" style="background:${colorCSS}">${cat.label}</span>
           <span class="zone-card-name">${zone.data.name}</span>
-          <span class="zone-card-status ${statusClass}">${statusText}</span>
+          <span class="zone-card-status available">Disponible</span>
         `;
 
-        if (!zone.data.reserved) {
-          card.addEventListener("click", () => selectZone(i));
-        }
-
+        card.addEventListener("click", () => selectZone(i));
         listEl.appendChild(card);
       });
     }
@@ -698,7 +688,7 @@
       if (intersects.length > 0) {
         const hitMesh = intersects[0].object;
         const zoneIndex = zones.findIndex(z => z.fill === hitMesh);
-        if (zoneIndex >= 0 && !zones[zoneIndex].data.reserved) {
+        if (zoneIndex >= 0) {
           selectZone(zoneIndex);
           return;
         }
