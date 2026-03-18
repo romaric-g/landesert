@@ -101,12 +101,13 @@ const sponsorsList = document.querySelector(".sponsors-list");
 const sponsorCardEls = [];
 let sponsors = [];
 
-// Load sponsors from JSON (cards only — decals placed after model loads)
+// Load sponsors from JSON (cards only for real sponsors — all logos placed on car)
 const sponsorsReady = fetch("assets/sponsors.json")
   .then(r => r.json())
   .then(data => {
     sponsors = data;
-    sponsors.forEach((sp, index) => {
+    // Only show sponsor: true (or undefined) in the list
+    sponsors.filter(sp => sp.sponsor !== false).forEach((sp, index) => {
       const card = document.createElement("div");
       card.className = "sponsor-card fade-in visible";
       card.dataset.sponsorIndex = index;
@@ -123,7 +124,7 @@ const sponsorsReady = fetch("assets/sponsors.json")
       info.className = "sponsor-card-info";
       info.innerHTML = `
         <div class="sponsor-card-name">${sp.name}</div>
-        <div class="sponsor-card-desc">${sp.description}</div>
+        <div class="sponsor-card-desc">${sp.description || ""}</div>
       `;
 
       card.appendChild(logoDiv);

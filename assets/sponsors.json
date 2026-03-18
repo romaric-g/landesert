@@ -21,7 +21,8 @@
       0,
       -1,
       0
-    ]
+    ],
+    "sponsor": true
   },
   {
     "name": "Familie Dem",
@@ -45,7 +46,8 @@
       0,
       0,
       1
-    ]
+    ],
+    "sponsor": true
   },
   {
     "name": "King Tony",
@@ -69,6 +71,27 @@
       0,
       0,
       1
-    ]
+    ],
+    "sponsor": true
+  },
+  {
+    "name": "Equipage 557",
+    "sponsor": false,
+    "image": "assets/images/sponsors/equipage-557.png",
+    "position": {
+      "x": -0.1925,
+      "y": 0.405,
+      "z": 0.47
+    },
+    "projection": [
+      0,
+      0,
+      -1
+    ],
+    "params": {
+      "size": 49,
+      "rotation": 0,
+      "flip": false
+    }
   }
 ]

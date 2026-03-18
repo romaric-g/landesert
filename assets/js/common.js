@@ -338,6 +338,17 @@ export function loadAndPlaceSponsors(carMeshes, scene) {
     });
 }
 
+// ---- Load decals (non-sponsor logos) from JSON and place them on the car ----
+export function loadAndPlaceDecals(carMeshes, scene) {
+  return fetch("assets/decals.json")
+    .then(r => r.json())
+    .then(decals => {
+      const promises = decals.map(d => placeSponsorOnCar(d, carMeshes, scene));
+      return Promise.all(promises).then(meshes => meshes.filter(Boolean));
+    })
+    .catch(() => []);
+}
+
 // ---- Animate camera to a sponsor's position ----
 export function animateCameraToSponsor(sp, camera, controls) {
   if (!sp.position || !sp.projection) return;
