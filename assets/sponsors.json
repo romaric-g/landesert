@@ -3,23 +3,23 @@
     "name": "ECPB",
     "description": "ECPB, sponsor de notre aventure 4L Trophy.",
     "url": "https://www.ecpb40.fr/",
-    "zone": "capot_avant_haut_gauche",
-    "zoneName": "Capot avant",
-    "category": "500",
+    "zone": "arriere_bas_droit",
+    "zoneName": "Arriere bas droit",
+    "category": "200",
     "image": "assets/images/sponsors/ECPB-LOGO.png",
     "params": {
-      "size": 50,
-      "rotation": 90,
-      "flip": true
+      "size": 26,
+      "rotation": 0,
+      "flip": false
     },
     "position": {
-      "x": -0.61,
-      "y": 0.6844,
-      "z": 0.1803
+      "x": 1.1121,
+      "y": 0.4755,
+      "z": -0.2667
     },
     "projection": [
-      0,
       -1,
+      0,
       0
     ],
     "sponsor": true
