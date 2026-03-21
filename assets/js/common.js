@@ -70,7 +70,7 @@ export function createScene(canvasId) {
   const canvas = document.getElementById(canvasId);
   const container = canvas.parentElement;
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf0ebe0);
+  scene.background = new THREE.Color(0x39B2F8);
 
   const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
   camera.position.set(-3, 2, 4);
@@ -99,7 +99,7 @@ export function createScene(canvasId) {
   // Ground
   const ground = new THREE.Mesh(
     new THREE.CircleGeometry(6, 48),
-    new THREE.MeshStandardMaterial({ color: 0xe0d8c8 })
+    new THREE.MeshStandardMaterial({ color: 0xFB9E00 })
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.01;

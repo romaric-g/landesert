@@ -168,7 +168,7 @@ function getViewerSize() {
 const { width: initW, height: initH } = getViewerSize();
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf0ebe0);
+scene.background = new THREE.Color(0x39B2F8);
 
 const camera = new THREE.PerspectiveCamera(45, initW / initH, 0.1, 100);
 camera.position.set(-2, 1.2, 2.5);
@@ -196,7 +196,7 @@ scene.add(ambientLight);
 // ---- Ground ----
 const groundGeo = new THREE.CircleGeometry(6, 64);
 const groundMat = new THREE.MeshStandardMaterial({
-  color: 0xe0d8c8,
+  color: 0xFB9E00,
   roughness: 0.9,
   metalness: 0.0,
 });
