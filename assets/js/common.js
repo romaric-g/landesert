@@ -98,7 +98,7 @@ export function createScene(canvasId) {
 
   // Ground
   const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(6, 48),
+    new THREE.CircleGeometry(6, 16),
     new THREE.MeshStandardMaterial({ color: 0xFB9E00 })
   );
   ground.rotation.x = -Math.PI / 2;
@@ -113,13 +113,24 @@ export function createScene(canvasId) {
     renderer.setSize(w, h);
   }).observe(container);
 
-  // Animate loop
+  // Animate loop (pause when tab hidden)
+  let animRunning = true;
   function animate() {
+    if (!animRunning) return;
     requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
   }
   animate();
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      animRunning = false;
+    } else {
+      animRunning = true;
+      animate();
+    }
+  });
 
   return { canvas, container, scene, camera, renderer, controls };
 }

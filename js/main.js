@@ -194,7 +194,7 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
 scene.add(ambientLight);
 
 // ---- Ground ----
-const groundGeo = new THREE.CircleGeometry(6, 64);
+const groundGeo = new THREE.CircleGeometry(6, 16);
 const groundMat = new THREE.MeshStandardMaterial({
   color: 0xFB9E00,
   roughness: 0.9,
@@ -419,7 +419,12 @@ const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let hoveredDecal = null;
 
+let pointerMoveThrottle = 0;
 function onPointerMove(e) {
+  const now = performance.now();
+  if (now - pointerMoveThrottle < 50) return;
+  pointerMoveThrottle = now;
+
   const rect = renderer.domElement.getBoundingClientRect();
   pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -523,8 +528,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeSponsorPopup();
 });
 
-// ---- Animation Loop ----
+// ---- Animation Loop (pause when tab hidden) ----
+let animRunning = true;
 function animate() {
+  if (!animRunning) return;
   requestAnimationFrame(animate);
   if (!cameraAnimating) {
     controls.update();
@@ -532,6 +539,15 @@ function animate() {
   renderer.render(scene, camera);
 }
 animate();
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    animRunning = false;
+  } else {
+    animRunning = true;
+    animate();
+  }
+});
 
 // ---- Resize (container-based) ----
 const resizeObserver = new ResizeObserver(() => {

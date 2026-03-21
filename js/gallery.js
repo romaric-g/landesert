@@ -18,6 +18,7 @@ galleryImages.forEach((img, i) => {
   imgEl.src = img.small || img.src;
   imgEl.alt = img.alt;
   imgEl.loading = "lazy";
+  imgEl.decoding = "async";
 
   item.appendChild(imgEl);
   item.addEventListener("click", () => openLightbox(i));
