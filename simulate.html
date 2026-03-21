@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simuler mon logo — Landesert 4L Trophy</title>
+  <title>Simuler mon logo - Landesert 4L Trophy</title>
   <meta name="description" content="Visualisez votre logo sur notre 4L en 3D. Simulateur interactif pour les sponsors du 4L Trophy 2027.">
   <link rel="canonical" href="https://landesert.vercel.app/simulate.html">
-  <meta property="og:title" content="Simuler mon logo — Landesert 4L Trophy">
+  <meta property="og:title" content="Simuler mon logo - Landesert 4L Trophy">
   <meta property="og:description" content="Visualisez votre logo sur notre 4L en 3D. Simulateur interactif pour les sponsors du 4L Trophy 2027.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://landesert.vercel.app/simulate.html">
@@ -20,7 +20,7 @@
       --color-cream: #FDF6E3;
       --color-sand: #E8C96D;
       --color-blue: #5BAFD6;
-      --color-green: #3A7D44;
+      --color-green: #39B2F8;
       --color-coral: #E85D3A;
       --color-brown: #6B4226;
       --color-bg: #FEFCF6;
@@ -324,8 +324,8 @@
       <h2>Simuler mon logo</h2>
 
       <div class="zone-info" id="zone-info">
-        <div class="zone-info-name" id="zone-name">—</div>
-        <span class="zone-info-tag" id="zone-tag">—</span>
+        <div class="zone-info-name" id="zone-name">-</div>
+        <span class="zone-info-tag" id="zone-tag">-</span>
         <p class="zone-info-hint">Zone indicative. Vous pouvez placer votre logo librement sur la voiture.</p>
         <a href="sponsor.html" style="display:inline-block;margin-top:0.4rem;font-size:0.8rem;color:var(--color-blue);text-decoration:none;">Changer de zone &rarr;</a>
       </div>
@@ -434,7 +434,7 @@
       tag.style.background = colorCSS;
 
       // Update contact link
-      const subject = encodeURIComponent(`Sponsoring 4L Trophy — ${zone.name}`);
+      const subject = encodeURIComponent(`Sponsoring 4L Trophy - ${zone.name}`);
       const body = encodeURIComponent(`Bonjour,\n\nJe suis intéressé(e) par l'emplacement "${zone.name}" (${cat.label}) sur votre 4L.\n\nCordialement,`);
       document.getElementById("btn-contact").href = `mailto:landesert.4ltrophy@gmail.com?subject=${subject}&body=${body}`;
 
@@ -494,12 +494,12 @@
       const right = new THREE.Vector3();
       const up = new THREE.Vector3();
       if (Math.abs(projDir.y) > 0.9) {
-        // Projecting downward (capot) — right = X, up = Z
+        // Projecting downward (capot) - right = X, up = Z
         right.set(1, 0, 0);
         up.crossVectors(right, projDir).normalize();
         right.crossVectors(projDir, up).normalize();
       } else {
-        // Projecting sideways — right = along car length, up = Y
+        // Projecting sideways - right = along car length, up = Y
         up.set(0, 1, 0);
         right.crossVectors(up, projDir).normalize();
         up.crossVectors(projDir, right).normalize();

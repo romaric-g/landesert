@@ -19,6 +19,7 @@ export const siteConfig = {
       {
         name: "Meyline Gauzi",
         role: "Co-pilote",
+        photo: "assets/images/Photo meyline transparent 400X400.png",
         description:
           "Étudiante en BTS scientifique à Blanquefort (33).<br/><br/>" +
           "Meyline, de son côté, souhaite s'investir dans un projet concret mêlant aventure et solidarité. Elle voit dans le 4L Trophy l'occasion de contribuer à une cause humanitaire tout en se confrontant à un défi inédit.",
@@ -26,6 +27,7 @@ export const siteConfig = {
       {
         name: "Cyprien Gauzi",
         role: "Pilote",
+        photo: "assets/images/Photo cyprien transparent 400X400.png",
         description:
           "Mécanicien agricole chez Agrivision à Liposthey (40).<br/><br/>" +
           "Cyprien, mécanicien de profession, est passionné par les vieilles mécaniques. Il est fasciné par le fait de pouvoir entretenir et restaurer des véhicules plus anciens que lui, en les ramenant à un état impeccable grâce à ses propres mains.",

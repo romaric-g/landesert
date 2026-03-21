@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Devenir Sponsor — Landesert 4L Trophy</title>
+  <title>Devenir Sponsor - Landesert 4L Trophy</title>
   <meta name="description" content="Soutenez l'équipage Landesert au 4L Trophy 2027 en devenant sponsor. Plusieurs formules de parrainage disponibles.">
   <link rel="canonical" href="https://landesert.vercel.app/sponsor.html">
-  <meta property="og:title" content="Devenir Sponsor — Landesert 4L Trophy">
+  <meta property="og:title" content="Devenir Sponsor - Landesert 4L Trophy">
   <meta property="og:description" content="Soutenez l'équipage Landesert au 4L Trophy 2027 en devenant sponsor.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://landesert.vercel.app/sponsor.html">
@@ -20,7 +20,7 @@
       --color-cream: #FDF6E3;
       --color-sand: #E8C96D;
       --color-blue: #5BAFD6;
-      --color-green: #3A7D44;
+      --color-green: #39B2F8;
       --color-coral: #E85D3A;
       --color-brown: #6B4226;
       --color-bg: #FEFCF6;
@@ -295,7 +295,7 @@
       <a class="btn-simulate" id="btn-simulate" href="#">Simuler mon logo</a>
       <div class="contact-bar">
         <p>Un emplacement vous intéresse ?</p>
-        <a href="mailto:landesert.4ltrophy@gmail.com?subject=Sponsoring%204L%20Trophy%20—%20Réservation%20emplacement" class="btn-contact">Nous contacter</a>
+        <a href="mailto:landesert.4ltrophy@gmail.com?subject=Sponsoring%204L%20Trophy%20-%20Réservation%20emplacement" class="btn-contact">Nous contacter</a>
       </div>
     </div>
   </div>
@@ -378,7 +378,7 @@
       // Build set of reserved zone IDs from sponsors
       const reservedIds = new Set(sponsors.map(sp => sp.zone).filter(Boolean));
 
-      // Filter out reserved zones — they don't appear at all
+      // Filter out reserved zones - they don't appear at all
       zonesData = allZones
         .filter(z => !reservedIds.has(z.id))
         .map(z => ({ ...z, category: z.category || "300" }));
@@ -390,7 +390,7 @@
         if (cache[hash]) {
           return cache[hash];
         }
-        console.warn("Cache miss for zone:", data.name, "— computing projection...");
+        console.warn("Cache miss for zone:", data.name, "- computing projection...");
         needsNewCache = true;
         const baked = bakeOneZone(data, hash);
         cache[hash] = { outline: baked.outline, fill: baked.fill };
@@ -404,7 +404,7 @@
 
       // Auto-download cache only on localhost
       if (needsNewCache && isLocalhost()) {
-        console.warn("Downloading updated zones-projected.json — replace the file in assets/");
+        console.warn("Downloading updated zones-projected.json - replace the file in assets/");
         const blob = new Blob([JSON.stringify(cache, null, 2)], {type: "application/json"});
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
         a.download = "zones-projected.json"; a.click();
@@ -629,7 +629,7 @@
 
       // Update mailto link with zone name
       const contactBtn = document.querySelector(".btn-contact");
-      const subject = encodeURIComponent(`Sponsoring 4L Trophy — ${zone.data.name}`);
+      const subject = encodeURIComponent(`Sponsoring 4L Trophy - ${zone.data.name}`);
       const body = encodeURIComponent(`Bonjour,\n\nJe suis intéressé(e) par l'emplacement "${zone.data.name}" (${(categories[zone.data.category] || {}).label || ""}) sur votre 4L.\n\nCordialement,`);
       contactBtn.href = `mailto:landesert.4ltrophy@gmail.com?subject=${subject}&body=${body}`;
       updateSimulateButton();

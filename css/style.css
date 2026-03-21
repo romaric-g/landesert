@@ -7,8 +7,8 @@
   --color-cream: #FDF6E3;
   --color-sand: #E8C96D;
   --color-blue: #5BAFD6;
-  --color-green: #3A7D44;
-  --color-coral: #E85D3A;
+  --color-green: #39B2F8;
+  --color-coral: #39B2F8;
   --color-brown: #6B4226;
   --color-bg: #FEFCF6;
   --color-text: #2D2A24;
@@ -239,7 +239,7 @@ body {
 }
 
 .hero-cta:hover {
-  background: #d4431a;
+  background: #2a8fd4;
   transform: translateY(-2px);
 }
 
@@ -297,17 +297,17 @@ section {
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1.5rem;
-  max-width: 650px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 750px;
   margin: 0 auto;
 }
 
 .team-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 2rem;
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
   text-align: center;
   transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -318,19 +318,20 @@ section {
   box-shadow: 0 8px 30px rgba(91, 175, 214, 0.12);
 }
 
-.team-card-avatar {
-  width: 64px;
-  height: 64px;
+.team-card-photo {
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-blue), var(--color-green));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  font-family: var(--font-heading);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: white;
+  overflow: hidden;
+  margin: 0 auto 1.2rem;
+  background: #FB9E00;
+}
+
+.team-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
 }
 
 .team-card-name {
@@ -612,7 +613,7 @@ section {
 }
 
 .popup-link:hover {
-  background: #d4431a;
+  background: #2a8fd4;
 }
 
 /* Popup backdrop */
@@ -705,14 +706,18 @@ section {
 }
 
 .cta-button:hover {
-  background: #d4431a;
+  background: #2a8fd4;
   transform: translateY(-2px);
 }
 
 .btn-sponsor {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
   display: inline-block;
   padding: 0.8rem 2rem;
-  margin-bottom: 1.5rem;
   background: var(--color-green);
   color: white;
   text-decoration: none;
@@ -721,11 +726,12 @@ section {
   font-weight: 600;
   font-size: 0.95rem;
   transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-sponsor:hover {
-  background: #2e6335;
-  transform: translateY(-2px);
+  background: #2a8fd4;
+  transform: translateX(-50%) translateY(-2px);
 }
 
 /* ---- Gallery ---- */

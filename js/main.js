@@ -41,7 +41,9 @@ if (siteConfig.team && teamGrid) {
     const card = document.createElement("div");
     card.className = "team-card fade-in";
     card.innerHTML = `
-      <div class="team-card-avatar">${member.name.charAt(0)}</div>
+      <div class="team-card-photo">
+        <img src="${member.photo}" alt="${member.name}">
+      </div>
       <h3 class="team-card-name">${member.name}</h3>
       <span class="team-card-role">${member.role}</span>
       <p class="team-card-desc">${member.description}</p>
