@@ -13,8 +13,8 @@ const heroTitle = document.querySelector(".hero-title");
 const heroTagline = document.querySelector(".hero-tagline");
 
 // ---- Populate site content from config ----
-heroTitle.textContent = siteConfig.teamName;
-heroTagline.textContent = siteConfig.tagline;
+if (heroTitle) heroTitle.textContent = siteConfig.teamName;
+if (heroTagline) heroTagline.textContent = siteConfig.tagline;
 const heroSubtitle = document.querySelector(".hero-subtitle");
 if (heroSubtitle) heroSubtitle.textContent = siteConfig.subtitle || "";
 
