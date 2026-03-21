@@ -691,6 +691,7 @@
 
         if (logoTexture) logoTexture.dispose();
         logoTexture = new THREE.Texture(img);
+        logoTexture.colorSpace = THREE.SRGBColorSpace;
         logoTexture.needsUpdate = true;
 
         controlsSection.classList.add("active");
@@ -931,6 +932,8 @@
 
       decalMesh = new THREE.Mesh(geo, mat);
       decalMesh.renderOrder = 10;
+      decalMesh.onBeforeRender = function(r) { r.toneMapping = THREE.NoToneMapping; };
+      decalMesh.onAfterRender = function(r) { r.toneMapping = THREE.ACESFilmicToneMapping; };
       scene.add(decalMesh);
     }
     // ---- Dev mode: export sponsor JSON ----
