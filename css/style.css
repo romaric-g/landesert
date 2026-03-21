@@ -243,6 +243,10 @@ body {
   transform: translateY(-2px);
 }
 
+.hero-mobile {
+  display: none;
+}
+
 /* ---- Sections ---- */
 
 section {
@@ -905,6 +909,32 @@ section {
 }
 
 @media (max-width: 768px) {
+  .hero-desktop {
+    display: none;
+  }
+
+  .hero-mobile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 6rem 2rem 3rem;
+    gap: 1.2rem;
+    background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-bg) 100%);
+  }
+
+  .hero-mobile-logo {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+  }
+
+  .hero-mobile .hero-tagline {
+    color: var(--color-brown);
+    text-shadow: none;
+    font-size: 1rem;
+  }
+
   .hero-tagline {
     font-size: 0.9rem;
   }
