@@ -54,7 +54,7 @@
     .header a { text-decoration: none; color: var(--color-brown); }
     .header .logo { font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem; }
     .header .logo img { height: 40px; }
-    .header .back { font-size: 0.9rem; opacity: 0.7; }
+    .header .back { font-size: 0.9rem; opacity: 0.7; padding: 0.8rem 1rem; margin: -0.8rem -1rem; }
     .header .back:hover { opacity: 1; }
 
     .main { display: flex; flex: 1; overflow: hidden; }
@@ -74,6 +74,30 @@
       font-size: 0.8rem;
       pointer-events: none;
       transition: opacity 0.5s;
+    }
+
+    .btn-recenter {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      color: var(--color-brown);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-recenter:hover {
+      background: var(--color-blue);
+      color: white;
+      transform: scale(1.1);
     }
 
     .side-panel {
@@ -320,6 +344,11 @@
     <div class="viewer-panel">
       <canvas id="car-viewer"></canvas>
       <div class="viewer-hint" id="viewer-hint">Cliquez sur la voiture pour placer votre logo</div>
+      <button class="btn-recenter" id="btn-recenter" title="Recentrer sur la zone">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+        </svg>
+      </button>
     </div>
     <div class="side-panel">
       <h2>Simuler mon logo</h2>
@@ -451,6 +480,11 @@
 
       // Restore previous logo & params from localStorage
       loadFromStorage();
+
+      // Recenter button
+      document.getElementById("btn-recenter").addEventListener("click", () => {
+        animateCameraToZone(zone, camera, controls);
+      });
 
       setTimeout(() => {
         document.getElementById("viewer-hint").style.opacity = "0";
