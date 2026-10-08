@@ -20,14 +20,6 @@
 </head>
 <body>
 
-  <!-- Loading Screen -->
-  <div id="loader">
-    <div class="loader-content">
-      <div class="loader-spinner"></div>
-      <p>Chargement du modèle 3D...</p>
-    </div>
-  </div>
-
   <!-- Header -->
   <header id="header">
     <div class="header-inner">
@@ -90,14 +82,14 @@
   <!-- Team Section -->
   <section id="team">
     <h2 class="section-title">L'Équipe</h2>
-    <p class="team-intro fade-in"></p>
+    <p class="team-intro"></p>
     <div class="team-grid"></div>
   </section>
 
   <!-- Event Section -->
   <section id="event">
     <h2 class="section-title event-title"></h2>
-    <div class="event-content fade-in">
+    <div class="event-content">
       <p class="event-description"></p>
       <div class="event-stats"></div>
     </div>
@@ -106,11 +98,22 @@
   <!-- Sponsors Section - Split layout: list + 3D car -->
   <section id="sponsors">
     <h2 class="section-title">Nos Sponsors</h2>
-    <p class="sponsors-intro fade-in">Cliquez sur un sponsor pour voir son logo sur notre 4L !</p>
+    <p class="sponsors-intro">Cliquez sur un sponsor pour voir son logo sur notre 4L !</p>
     <div class="sponsors-layout">
       <div class="sponsors-list"></div>
       <div class="sponsors-viewer">
         <canvas id="car-viewer"></canvas>
+        <!-- 3D model loader: theater curtains that open once the car is ready -->
+        <div id="loader" role="status" aria-live="polite">
+          <div class="curtain curtain-left"></div>
+          <div class="curtain curtain-right"></div>
+          <div class="curtain-valance"></div>
+          <div class="loader-center">
+            <p class="loader-title">Notre 4L se prépare</p>
+            <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+            <p class="loader-step">Chargement de la 4L…</p>
+          </div>
+        </div>
         <a href="sponsor.html" class="btn-sponsor">Devenir Sponsor</a>
       </div>
     </div>
@@ -129,7 +132,7 @@
   <section id="humanitarian">
     <h2 class="section-title humanitarian-title"></h2>
     <div class="humanitarian-content">
-      <div class="humanitarian-text fade-in">
+      <div class="humanitarian-text">
         <p class="humanitarian-description"></p>
         <ul class="humanitarian-actions"></ul>
       </div>
@@ -139,7 +142,7 @@
   <!-- Association Section -->
   <section id="association">
     <h2 class="section-title association-title"></h2>
-    <div class="association-content fade-in">
+    <div class="association-content">
       <p class="association-description"></p>
       <a href="mailto:" class="cta-button contact-email">Nous contacter</a>
     </div>

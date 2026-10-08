@@ -12,7 +12,7 @@ let currentIndex = 0;
 // ---- Build gallery grid ----
 galleryImages.forEach((img, i) => {
   const item = document.createElement("div");
-  item.className = "gallery-item fade-in";
+  item.className = "gallery-item";
 
   const imgEl = document.createElement("img");
   imgEl.src = img.small || img.src;
@@ -79,17 +79,3 @@ lightbox.addEventListener("touchend", (e) => {
     navigate(dx > 0 ? -1 : 1);
   }
 });
-
-// ---- Fade-in observer for gallery items ----
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-      }
-    });
-  },
-  { threshold: 0.1 }
-);
-
-document.querySelectorAll(".gallery-item.fade-in").forEach((el) => observer.observe(el));

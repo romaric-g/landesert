@@ -134,4 +134,10 @@ export const galleryImages = [
   { small: "assets/images/gallery/small/img_9673.jpg", src: "assets/images/gallery/img_9673.jpg", alt: "Photo 11" },
   { small: "assets/images/gallery/small/img_9678.jpg", src: "assets/images/gallery/img_9678.jpg", alt: "Photo 12" },
   { small: "assets/images/gallery/small/img_9783.jpg", src: "assets/images/gallery/img_9783.jpg", alt: "Photo 13" },
+  { small: "assets/images/gallery/small/img_5160.jpg", src: "assets/images/gallery/img_5160.jpg", alt: "Photo 14" },
+  { small: "assets/images/gallery/small/img_5156.jpg", src: "assets/images/gallery/img_5156.jpg", alt: "Photo 15" },
+  { small: "assets/images/gallery/small/img_8293.jpg", src: "assets/images/gallery/img_8293.jpg", alt: "Photo 16" },
+  { small: "assets/images/gallery/small/img_8277.jpg", src: "assets/images/gallery/img_8277.jpg", alt: "Photo 17" },
+  { small: "assets/images/gallery/small/img_8299.jpg", src: "assets/images/gallery/img_8299.jpg", alt: "Photo 18" },
+  { small: "assets/images/gallery/small/img_8286.jpg", src: "assets/images/gallery/img_8286.jpg", alt: "Photo 19" },
 ];

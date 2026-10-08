@@ -379,7 +379,8 @@
       scene.updateMatrixWorld(true);
 
       // Build set of reserved zone IDs from sponsors
-      const reservedIds = new Set(sponsors.map(sp => sp.zone).filter(Boolean));
+      // sp.zone can be a single zone ID or an array (logo spanning several zones)
+      const reservedIds = new Set(sponsors.flatMap(sp => [].concat(sp.zone || [])));
 
       // Filter out reserved zones - they don't appear at all
       zonesData = allZones

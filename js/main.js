@@ -39,10 +39,10 @@ if (siteConfig.team && teamGrid) {
   if (teamIntro) teamIntro.textContent = siteConfig.team.intro;
   siteConfig.team.members.forEach((member) => {
     const card = document.createElement("div");
-    card.className = "team-card fade-in";
+    card.className = "team-card";
     card.innerHTML = `
       <div class="team-card-photo">
-        <img src="${member.photo}" alt="${member.name}">
+        <img src="${member.photo}" alt="${member.name}" loading="lazy" decoding="async">
       </div>
       <h3 class="team-card-name">${member.name}</h3>
       <span class="team-card-role">${member.role}</span>
@@ -111,7 +111,7 @@ const sponsorsReady = fetch("assets/sponsors.json")
     // Only show sponsor: true (or undefined) in the list
     sponsors.filter(sp => sp.sponsor !== false).forEach((sp, index) => {
       const card = document.createElement("div");
-      card.className = "sponsor-card fade-in visible";
+      card.className = "sponsor-card";
       card.dataset.sponsorIndex = index;
 
       const logoDiv = document.createElement("div");
@@ -329,22 +329,22 @@ gltfLoader.load(
 
     model.updateMatrixWorld(true);
     // Wait for sponsors data, then place logos on car using position/projection
-    sponsorsReady.then(() => {
-      loadAndPlaceSponsors(carMeshes, scene).then(({ decalMeshes: meshes }) => {
+    // Reveal the model once the sponsor logos are on the car
+    loaderProgress.logos();
+    sponsorsReady
+      .then(() => loadAndPlaceSponsors(carMeshes, scene))
+      .then(({ decalMeshes: meshes }) => {
         decalMeshes = meshes;
-      });
-    });
-    hideLoader();
+      })
+      .finally(() => loaderProgress.finish());
 
     if (siteConfig.devMode) {
       addDevHelpers();
     }
   },
   (progress) => {
-    if (progress.total > 0) {
-      const pct = Math.min(100, Math.round((progress.loaded / progress.total) * 100));
-      loaderEl.querySelector("p").textContent = `Chargement... ${pct}%`;
-    }
+    // Download = first part of the bar; without Content-Length the initial creep handles it
+    if (progress.total > 0) loaderProgress.download(progress.loaded / progress.total);
   },
   () => {
     console.warn("GLB model not found, using placeholder car");
@@ -354,14 +354,69 @@ gltfLoader.load(
         decalMeshes = meshes;
       });
     });
-    hideLoader();
+    loaderProgress.finish();
     if (siteConfig.devMode) addDevHelpers();
   }
 );
 
-function hideLoader() {
-  loaderEl.classList.add("hidden");
+// ---- Loader progress ----
+// Parsing the GLB blocks the main thread for a few seconds, so JS-driven
+// animation would freeze. The bar is driven by CSS transform transitions
+// instead (run by the compositor), each step easing towards a phase target.
+const PHASE_DOWNLOAD_END = 0.55;
+const PHASE_PARSE_CEIL = 0.82;
+const PHASE_MODEL_END = 0.86;
+const PHASE_LOGOS_CEIL = 0.97;
+
+function createLoaderProgress(el) {
+  const fill = el.querySelector(".loader-bar-fill");
+  const label = el.querySelector(".loader-step");
+  let current = 0;
+  let opened = false;
+
+  function animateTo(value, seconds, easing = "cubic-bezier(0.25, 0.6, 0.3, 1)") {
+    if (value <= current) return;
+    current = value;
+    fill.style.transition = `transform ${seconds}s ${easing}`;
+    fill.style.transform = `scaleX(${value})`;
+  }
+
+  function open() {
+    if (opened) return;
+    opened = true;
+    el.classList.add("open");
+    // The valance is the last element to move
+    const valance = el.querySelector(".curtain-valance");
+    valance.addEventListener("transitionend", () => el.classList.add("done"), { once: true });
+  }
+
+  // Start creeping right away (covers downloads without Content-Length)
+  requestAnimationFrame(() => animateTo(PHASE_DOWNLOAD_END * 0.9, 8));
+
+  return {
+    download(ratio) {
+      animateTo(0.05 + (PHASE_DOWNLOAD_END - 0.05) * ratio, 0.5, "linear");
+      if (ratio >= 1) this.parsing();
+    },
+    parsing() {
+      label.textContent = "Assemblage de la carrosserie…";
+      animateTo(PHASE_PARSE_CEIL, 3);
+    },
+    logos() {
+      label.textContent = "Pose des logos sponsors…";
+      animateTo(PHASE_MODEL_END, 0.4);
+      requestAnimationFrame(() => animateTo(PHASE_LOGOS_CEIL, 2));
+    },
+    finish() {
+      label.textContent = "Moteur !";
+      current = 0;
+      animateTo(1, 0.35, "ease-out");
+      setTimeout(open, 600);
+    },
+  };
 }
+
+const loaderProgress = createLoaderProgress(loaderEl);
 
 // ---- Dev Mode ----
 function addDevHelpers() {
@@ -490,7 +545,11 @@ function showSponsorPopup(sp) {
   popup.querySelector(".popup-name").textContent = sp.name;
   popup.querySelector(".popup-description").textContent = sp.description;
   const popupLink = popup.querySelector(".popup-link");
-  if (popupLink) popupLink.href = sp.url || "#";
+  if (popupLink) {
+    // Hide the button when the sponsor has no website
+    popupLink.href = sp.url || "#";
+    popupLink.style.display = sp.url ? "" : "none";
+  }
 
   const logoContainer = popup.querySelector(".popup-logo");
   if (sp.image) {
@@ -559,17 +618,3 @@ const resizeObserver = new ResizeObserver(() => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 resizeObserver.observe(viewerContainer);
-
-// ---- Scroll fade-in observer ----
-const fadeEls = document.querySelectorAll(".fade-in");
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-      }
-    });
-  },
-  { threshold: 0.1 }
-);
-fadeEls.forEach((el) => observer.observe(el));
