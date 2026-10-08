@@ -21,7 +21,7 @@ export const siteConfig = {
         role: "Co-pilote",
         photo: "assets/images/Photo meyline transparent 400X400.png",
         description:
-          "Étudiante en BTS scientifique à Blanquefort (33).<br/><br/>" +
+          "Étudiante en classe passerelle Agro-Véto.<br/><br/>" +
           "Meyline, de son côté, souhaite s'investir dans un projet concret mêlant aventure et solidarité. Elle voit dans le 4L Trophy l'occasion de contribuer à une cause humanitaire tout en se confrontant à un défi inédit.",
       },
       {
