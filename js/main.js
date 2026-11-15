@@ -3,6 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { siteConfig, modelPath, socialLinks, carColors } from "./config.js";
 import { loadAndPlaceSponsors, animateCameraToSponsor } from "../assets/js/common.js";
+import { addRoofRack } from "./roofRack.js";
 
 // ---- DOM refs ----
 const canvas = document.getElementById("car-viewer");
@@ -326,12 +327,16 @@ gltfLoader.load(
     });
 
     scene.add(model);
+    // Rack wheels carry sponsor logos too: add them to the projection surfaces before placing logos
+    const rackReady = addRoofRack(model, gltfLoader)
+      .then((meshes) => carMeshes.push(...meshes))
+      .catch((e) => console.warn("Roof rack not loaded", e));
 
     model.updateMatrixWorld(true);
     // Wait for sponsors data, then place logos on car using position/projection
     // Reveal the model once the sponsor logos are on the car
     loaderProgress.logos();
-    sponsorsReady
+    Promise.all([sponsorsReady, rackReady])
       .then(() => loadAndPlaceSponsors(carMeshes, scene))
       .then(({ decalMeshes: meshes }) => {
         decalMeshes = meshes;

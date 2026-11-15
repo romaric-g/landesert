@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { addRoofRack } from "../../js/roofRack.js";
 
 // ---- Dev mode ----
 const DEV_STORAGE_KEY = "4ltrophy_dev_mode";
@@ -139,7 +140,8 @@ export function createScene(canvasId) {
 export function loadCarModel(scene) {
   const carMeshes = [];
   const promise = new Promise((resolve) => {
-    new GLTFLoader().load(MODEL_PATH, (gltf) => {
+    const loader = new GLTFLoader();
+    loader.load(MODEL_PATH, (gltf) => {
       const model = gltf.scene;
 
       model.updateMatrixWorld(true);
@@ -168,7 +170,11 @@ export function loadCarModel(scene) {
         }
       });
       scene.add(model);
-      resolve(carMeshes);
+      // Rack wheels are sponsor surfaces too; resolve once they're in carMeshes
+      addRoofRack(model, loader)
+        .then((meshes) => carMeshes.push(...meshes))
+        .catch((e) => console.warn("Roof rack not loaded", e))
+        .finally(() => resolve(carMeshes));
     });
   });
   return promise;
