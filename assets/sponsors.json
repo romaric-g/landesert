@@ -194,5 +194,29 @@
       1
     ],
     "sponsor": true
+  },
+  {
+    "name": "Mon Contrôle Technique",
+    "description": "Mon Contrôle Technique Parentis-en-Born, sponsor de notre aventure 4L Trophy.",
+    "zone": "arriere_haut_droit",
+    "zoneName": "Arriere haut",
+    "category": "400",
+    "image": "assets/images/sponsors/MON-CONTROLE-TECHNIQUE.png",
+    "params": {
+      "size": 28,
+      "rotation": 0,
+      "flip": false
+    },
+    "position": {
+      "x": 1.07,
+      "y": 0.64,
+      "z": -0.025
+    },
+    "projection": [
+      -1,
+      0,
+      0
+    ],
+    "sponsor": true
   }
 ]
